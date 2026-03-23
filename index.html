@@ -354,6 +354,8 @@
     .market-card__badge--closed { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
     .market-card__badge--settled { background: var(--settled-bg); color: var(--settled); border: 1px solid var(--settled-border); }
     .market-card__badge--void { background: var(--void-bg); color: var(--void); border: 1px solid var(--void-border); }
+    .market-card__badge--settling { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-border); }
+    .market-card__badge--cancelling { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
 
     .market-card__mode-toggle {
       display: flex; gap: 2px; margin-left: 4px;
@@ -481,6 +483,63 @@
     }
     .mkt-controls__stats span { color: var(--text-secondary); font-weight: 600; }
 
+    /* ===== LINE ROW LAYOUT ===== */
+    .line-row {
+      display: flex; align-items: center; gap: 4px; padding: 3px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .line-row:last-child { border-bottom: none; }
+    .line-row--settled { opacity: 0.65; }
+    .line-row--settling { background: var(--orange-bg); border-radius: var(--radius-sm); padding: 3px 4px; }
+    .line-row--cancelling { background: var(--red-bg); border-radius: var(--radius-sm); padding: 3px 4px; }
+
+    .line-specifier {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-primary);
+      background: var(--bg-input); border: 1px solid var(--border-primary);
+      padding: 2px 7px; border-radius: var(--radius-sm); min-width: 38px;
+      text-align: center; flex-shrink: 0;
+    }
+    .line-specifier--settled { background: var(--settled-bg); border-color: var(--settled-border); color: var(--settled); }
+    .line-specifier--void { background: var(--void-bg); border-color: var(--void-border); color: var(--void); }
+
+    .line-sels { display: flex; gap: 3px; flex: 1; min-width: 0; }
+    .line-sels .sel { flex: 1; min-width: 0; padding: 3px 6px; }
+    .line-sels .sel__odds { font-size: 11px; min-width: 30px; }
+    .line-sels .sel__liability { font-size: 8px; min-width: 30px; }
+    .line-sels .sel__name { font-size: 10px; }
+
+    .line-actions {
+      display: flex; gap: 2px; flex-shrink: 0; align-items: center;
+    }
+    .line-actions .mkt-ctrl { font-size: 8px; padding: 1px 4px; }
+
+    .line-countdown {
+      height: 2px; border-radius: 1px; margin-top: 2px;
+      animation: progressShrink 10s linear forwards;
+    }
+    .line-countdown--orange { background: var(--orange); }
+    .line-countdown--red { background: var(--red); }
+
+    .line-settle-sel {
+      display: flex; align-items: center; padding: 3px 6px;
+      background: var(--bg-surface); border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-sm); cursor: pointer; transition: all 0.12s; gap: 4px;
+      flex: 1; min-width: 0;
+    }
+    .line-settle-sel:hover { border-color: var(--border-focus); background: var(--bg-elevated); }
+    .line-settle-sel--selected { border-color: var(--green); background: var(--green-bg); }
+    .line-settle-sel--winner { border-color: var(--settled); background: var(--settled-bg); }
+    .line-settle-sel__radio {
+      width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border-primary);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .line-settle-sel--selected .line-settle-sel__radio { border-color: var(--green); }
+    .line-settle-sel--winner .line-settle-sel__radio { border-color: var(--settled); }
+    .line-settle-sel__radio-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .line-settle-sel--selected .line-settle-sel__radio-dot { background: var(--green); }
+    .line-settle-sel--winner .line-settle-sel__radio-dot { background: var(--settled); }
+    .line-settle-sel__name { font-size: 10px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     /* ===== MODALS / OVERLAYS ===== */
     .overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.6);
@@ -594,142 +653,177 @@
 
     const initialMarkets = [
       // === MAIN ===
-      { id: 'match-winner', name: 'Match Winner', group: 'main', status: 'open', settled: null, favorite: true, liability: 12450, volume: 34200, selections: [
+      { id: 'match-winner', name: 'Match Winner', group: 'main', status: 'open', favorite: true, liability: 12450, volume: 34200, selections: [
         sel('mw-1', 'Manchester United', 2.35, 5200), sel('mw-x', 'Draw', 3.25, 3100), sel('mw-2', 'Liverpool', 2.85, 4150)] },
-      { id: 'double-chance', name: 'Double Chance', group: 'main', status: 'open', settled: null, favorite: false, liability: 5320, volume: 12800, selections: [
+      { id: 'double-chance', name: 'Double Chance', group: 'main', status: 'open', favorite: false, liability: 5320, volume: 12800, selections: [
         sel('dc-1x', '1X', 1.35, 2100), sel('dc-12', '12', 1.28, 1620), sel('dc-x2', 'X2', 1.52, 1600)] },
-      { id: 'draw-no-bet', name: 'Draw No Bet', group: 'main', status: 'open', settled: null, favorite: false, liability: 7800, volume: 19500, selections: [
+      { id: 'draw-no-bet', name: 'Draw No Bet', group: 'main', status: 'open', favorite: false, liability: 7800, volume: 19500, selections: [
         sel('dnb-1', 'Manchester United', 1.72, 4200), sel('dnb-2', 'Liverpool', 2.10, 3600)] },
-      // === GOALS ===
-      { id: 'total-goals-1.5', name: 'Total Goals', specifier: '1.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 14200, volume: 36800, selections: [
-        sel('tg15-o', 'Over 1.5', 1.32, 8400), sel('tg15-u', 'Under 1.5', 3.40, 5800)] },
-      { id: 'total-goals-2.5', name: 'Total Goals', specifier: '2.5', group: 'goals', status: 'open', settled: null, favorite: true, liability: 18700, volume: 45600, selections: [
-        sel('tg25-o', 'Over 2.5', 1.88, 10200), sel('tg25-u', 'Under 2.5', 1.92, 8500)] },
-      { id: 'total-goals-3.5', name: 'Total Goals', specifier: '3.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 8200, volume: 21300, selections: [
-        sel('tg35-o', 'Over 3.5', 2.75, 4800), sel('tg35-u', 'Under 3.5', 1.45, 3400)] },
-      { id: 'total-goals-4.5', name: 'Total Goals', specifier: '4.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 4100, volume: 10500, selections: [
-        sel('tg45-o', 'Over 4.5', 4.80, 1800), sel('tg45-u', 'Under 4.5', 1.18, 2300)] },
-      { id: 'total-goals-5.5', name: 'Total Goals', specifier: '5.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 1900, volume: 4800, selections: [
-        sel('tg55-o', 'Over 5.5', 8.50, 600), sel('tg55-u', 'Under 5.5', 1.06, 1300)] },
-      { id: 'btts', name: 'Both Teams To Score', group: 'goals', status: 'open', settled: null, favorite: false, liability: 9600, volume: 28400, selections: [
+      // === GOALS (line-based) ===
+      { id: 'total-goals', name: 'Total Goals', group: 'goals', status: 'open', favorite: true, liability: 47100, volume: 119000, lines: [
+        { id: 'total-goals-1.5', specifier: '1.5', status: 'open', settled: null, selections: [sel('tg15-o', 'Over', 1.32, 8400), sel('tg15-u', 'Under', 3.40, 5800)] },
+        { id: 'total-goals-2.5', specifier: '2.5', status: 'open', settled: null, selections: [sel('tg25-o', 'Over', 1.88, 10200), sel('tg25-u', 'Under', 1.92, 8500)] },
+        { id: 'total-goals-3.5', specifier: '3.5', status: 'open', settled: null, selections: [sel('tg35-o', 'Over', 2.75, 4800), sel('tg35-u', 'Under', 1.45, 3400)] },
+        { id: 'total-goals-4.5', specifier: '4.5', status: 'open', settled: null, selections: [sel('tg45-o', 'Over', 4.80, 1800), sel('tg45-u', 'Under', 1.18, 2300)] },
+        { id: 'total-goals-5.5', specifier: '5.5', status: 'open', settled: null, selections: [sel('tg55-o', 'Over', 8.50, 600), sel('tg55-u', 'Under', 1.06, 1300)] },
+      ] },
+      { id: 'btts', name: 'Both Teams To Score', group: 'goals', status: 'open', favorite: false, liability: 9600, volume: 28400, selections: [
         sel('btts-y', 'Yes', 1.72, 5600), sel('btts-n', 'No', 2.15, 4000)] },
-      { id: 'btts-ht', name: 'BTTS 1st Half', group: 'goals', status: 'open', settled: null, favorite: false, liability: 3200, volume: 8100, selections: [
+      { id: 'btts-ht', name: 'BTTS 1st Half', group: 'goals', status: 'open', favorite: false, liability: 3200, volume: 8100, selections: [
         sel('bttsht-y', 'Yes', 3.80, 1400), sel('bttsht-n', 'No', 1.25, 1800)] },
-      { id: 'exact-goals', name: 'Exact Goals', group: 'goals', status: 'open', settled: null, favorite: false, liability: 4200, volume: 9800, selections: [
+      { id: 'exact-goals', name: 'Exact Goals', group: 'goals', status: 'open', favorite: false, liability: 4200, volume: 9800, selections: [
         sel('eg-0', '0 Goals', 8.50, 420), sel('eg-1', '1 Goal', 4.20, 880), sel('eg-2', '2 Goals', 3.40, 1200),
         sel('eg-3', '3 Goals', 3.80, 960), sel('eg-4', '4 Goals', 5.50, 480), sel('eg-5+', '5+ Goals', 9.00, 260)] },
-      { id: 'exact-goals-ht', name: 'Exact Goals 1st Half', group: 'goals', status: 'open', settled: null, favorite: false, liability: 2800, volume: 6400, selections: [
+      { id: 'exact-goals-ht', name: 'Exact Goals 1st Half', group: 'goals', status: 'open', favorite: false, liability: 2800, volume: 6400, selections: [
         sel('eght-0', '0 Goals', 3.20, 800), sel('eght-1', '1 Goal', 2.50, 1100), sel('eght-2', '2 Goals', 3.80, 580), sel('eght-3+', '3+ Goals', 6.50, 320)] },
-      { id: 'home-exact-goals', name: 'Home Exact Goals', group: 'goals', status: 'open', settled: null, favorite: false, liability: 2100, volume: 5100, selections: [
+      { id: 'home-exact-goals', name: 'Home Exact Goals', group: 'goals', status: 'open', favorite: false, liability: 2100, volume: 5100, selections: [
         sel('heg-0', '0 Goals', 3.40, 520), sel('heg-1', '1 Goal', 2.60, 780), sel('heg-2', '2 Goals', 3.50, 500), sel('heg-3+', '3+ Goals', 5.00, 300)] },
-      { id: 'away-exact-goals', name: 'Away Exact Goals', group: 'goals', status: 'open', settled: null, favorite: false, liability: 1900, volume: 4600, selections: [
+      { id: 'away-exact-goals', name: 'Away Exact Goals', group: 'goals', status: 'open', favorite: false, liability: 1900, volume: 4600, selections: [
         sel('aeg-0', '0 Goals', 3.10, 540), sel('aeg-1', '1 Goal', 2.70, 700), sel('aeg-2', '2 Goals', 3.80, 420), sel('aeg-3+', '3+ Goals', 5.50, 240)] },
-      { id: 'home-total-goals-1.5', name: 'Home Total Goals', specifier: '1.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 5400, volume: 13200, selections: [
-        sel('htg15-o', 'Over 1.5', 2.10, 3000), sel('htg15-u', 'Under 1.5', 1.72, 2400)] },
-      { id: 'away-total-goals-1.5', name: 'Away Total Goals', specifier: '1.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 4800, volume: 11800, selections: [
-        sel('atg15-o', 'Over 1.5', 2.30, 2500), sel('atg15-u', 'Under 1.5', 1.62, 2300)] },
-      { id: 'odd-even-goals', name: 'Odd/Even Goals', group: 'goals', status: 'open', settled: null, favorite: false, liability: 3600, volume: 8900, selections: [
+      { id: 'home-total-goals', name: 'Home Total Goals', group: 'goals', status: 'open', favorite: false, liability: 10800, volume: 26400, lines: [
+        { id: 'htg-0.5', specifier: '0.5', status: 'open', settled: null, selections: [sel('htg05-o', 'Over', 1.18, 2400), sel('htg05-u', 'Under', 4.80, 1200)] },
+        { id: 'htg-1.5', specifier: '1.5', status: 'open', settled: null, selections: [sel('htg15-o', 'Over', 2.10, 3000), sel('htg15-u', 'Under', 1.72, 2400)] },
+        { id: 'htg-2.5', specifier: '2.5', status: 'open', settled: null, selections: [sel('htg25-o', 'Over', 3.60, 1000), sel('htg25-u', 'Under', 1.30, 800)] },
+      ] },
+      { id: 'away-total-goals', name: 'Away Total Goals', group: 'goals', status: 'open', favorite: false, liability: 9600, volume: 23600, lines: [
+        { id: 'atg-0.5', specifier: '0.5', status: 'open', settled: null, selections: [sel('atg05-o', 'Over', 1.22, 2200), sel('atg05-u', 'Under', 4.20, 1100)] },
+        { id: 'atg-1.5', specifier: '1.5', status: 'open', settled: null, selections: [sel('atg15-o', 'Over', 2.30, 2500), sel('atg15-u', 'Under', 1.62, 2300)] },
+        { id: 'atg-2.5', specifier: '2.5', status: 'open', settled: null, selections: [sel('atg25-o', 'Over', 4.00, 800), sel('atg25-u', 'Under', 1.25, 700)] },
+      ] },
+      { id: 'odd-even-goals', name: 'Odd/Even Goals', group: 'goals', status: 'open', favorite: false, liability: 3600, volume: 8900, selections: [
         sel('oe-odd', 'Odd', 1.90, 1900), sel('oe-even', 'Even', 1.90, 1700)] },
-      { id: 'first-goal', name: 'First Goal', group: 'goals', status: 'open', settled: null, favorite: false, liability: 6200, volume: 15400, selections: [
+      { id: 'first-goal', name: 'First Goal', group: 'goals', status: 'open', favorite: false, liability: 6200, volume: 15400, selections: [
         sel('fg-1', 'Man Utd', 2.10, 2800), sel('fg-2', 'Liverpool', 2.30, 2200), sel('fg-none', 'No Goal', 8.50, 1200)] },
-      { id: 'last-goal', name: 'Last Goal', group: 'goals', status: 'open', settled: null, favorite: false, liability: 3800, volume: 9200, selections: [
+      { id: 'last-goal', name: 'Last Goal', group: 'goals', status: 'open', favorite: false, liability: 3800, volume: 9200, selections: [
         sel('lg-1', 'Man Utd', 2.20, 1700), sel('lg-2', 'Liverpool', 2.40, 1400), sel('lg-none', 'No Goal', 8.50, 700)] },
       // === HALVES ===
-      { id: 'ht-result', name: 'Half Time Result', group: 'halves', status: 'settled', settled: 'ht-x', favorite: false, liability: 6100, volume: 15200, selections: [
-        sel('ht-1', 'Man Utd', 2.90, 2200), sel('ht-x', 'Draw', 2.30, 2400), sel('ht-2', 'Liverpool', 3.10, 1500)] },
-      { id: 'ht-ft', name: 'HT / FT', group: 'halves', status: 'suspended', settled: null, favorite: false, liability: 3200, volume: 7400, selections: [
+      { id: 'ht-result', name: 'Half Time Result', group: 'halves', status: 'settled', favorite: false, liability: 6100, volume: 15200, selections: [
+        sel('ht-1', 'Man Utd', 2.90, 2200), sel('ht-x', 'Draw', 2.30, 2400), sel('ht-2', 'Liverpool', 3.10, 1500)],
+        settled: 'ht-x' },
+      { id: 'ht-ft', name: 'HT / FT', group: 'halves', status: 'suspended', favorite: false, liability: 3200, volume: 7400, selections: [
         susSel('htft-11', '1/1', 4.50, 600), susSel('htft-1x', '1/X', 18.00, 120), susSel('htft-12', '1/2', 15.00, 180),
         susSel('htft-x1', 'X/1', 6.50, 420), susSel('htft-xx', 'X/X', 5.80, 480), susSel('htft-x2', 'X/2', 6.00, 400),
         susSel('htft-21', '2/1', 16.00, 140), susSel('htft-2x', '2/X', 20.00, 100), susSel('htft-22', '2/2', 5.20, 760)] },
-      { id: 'ht-total-goals-0.5', name: 'HT Total Goals', specifier: '0.5', group: 'halves', status: 'settled', settled: 'httg05-o', favorite: false, liability: 7200, volume: 17800, selections: [
-        sel('httg05-o', 'Over 0.5', 1.42, 4200), sel('httg05-u', 'Under 0.5', 2.80, 3000)] },
-      { id: 'ht-total-goals-1.5', name: 'HT Total Goals', specifier: '1.5', group: 'halves', status: 'settled', settled: 'httg15-u', favorite: false, liability: 4600, volume: 11200, selections: [
-        sel('httg15-o', 'Over 1.5', 2.60, 2400), sel('httg15-u', 'Under 1.5', 1.50, 2200)] },
-      { id: 'ht-double-chance', name: 'HT Double Chance', group: 'halves', status: 'open', settled: null, favorite: false, liability: 3400, volume: 8200, selections: [
+      { id: 'ht-total-goals', name: 'HT Total Goals', group: 'halves', status: 'open', favorite: false, liability: 11800, volume: 29000, lines: [
+        { id: 'httg-0.5', specifier: '0.5', status: 'settled', settled: 'httg05-o', selections: [sel('httg05-o', 'Over', 1.42, 4200), sel('httg05-u', 'Under', 2.80, 3000)] },
+        { id: 'httg-1.5', specifier: '1.5', status: 'settled', settled: 'httg15-u', selections: [sel('httg15-o', 'Over', 2.60, 2400), sel('httg15-u', 'Under', 1.50, 2200)] },
+      ] },
+      { id: 'ht-double-chance', name: 'HT Double Chance', group: 'halves', status: 'open', favorite: false, liability: 3400, volume: 8200, selections: [
         sel('htdc-1x', '1X', 1.30, 1400), sel('htdc-12', '12', 1.55, 1000), sel('htdc-x2', 'X2', 1.35, 1000)] },
-      { id: 'highest-scoring-half', name: 'Highest Scoring Half', group: 'halves', status: 'open', settled: null, favorite: false, liability: 2800, volume: 6800, selections: [
+      { id: 'highest-scoring-half', name: 'Highest Scoring Half', group: 'halves', status: 'open', favorite: false, liability: 2800, volume: 6800, selections: [
         sel('hsh-1', '1st Half', 3.20, 900), sel('hsh-2', '2nd Half', 2.10, 1200), sel('hsh-eq', 'Equal', 3.50, 700)] },
-      { id: '2h-result', name: '2nd Half Result', group: 'halves', status: 'open', settled: null, favorite: false, liability: 4100, volume: 10200, selections: [
+      { id: '2h-result', name: '2nd Half Result', group: 'halves', status: 'open', favorite: false, liability: 4100, volume: 10200, selections: [
         sel('2h-1', 'Man Utd', 2.70, 1500), sel('2h-x', 'Draw', 2.50, 1400), sel('2h-2', 'Liverpool', 2.90, 1200)] },
-      { id: '2h-total-goals-1.5', name: '2H Total Goals', specifier: '1.5', group: 'halves', status: 'open', settled: null, favorite: false, liability: 5200, volume: 12800, selections: [
-        sel('2htg15-o', 'Over 1.5', 2.20, 2800), sel('2htg15-u', 'Under 1.5', 1.65, 2400)] },
+      { id: '2h-total-goals', name: '2H Total Goals', group: 'halves', status: 'open', favorite: false, liability: 10400, volume: 25600, lines: [
+        { id: '2htg-0.5', specifier: '0.5', status: 'open', settled: null, selections: [sel('2htg05-o', 'Over', 1.28, 2000), sel('2htg05-u', 'Under', 3.60, 1200)] },
+        { id: '2htg-1.5', specifier: '1.5', status: 'open', settled: null, selections: [sel('2htg15-o', 'Over', 2.20, 2800), sel('2htg15-u', 'Under', 1.65, 2400)] },
+        { id: '2htg-2.5', specifier: '2.5', status: 'open', settled: null, selections: [sel('2htg25-o', 'Over', 3.80, 1000), sel('2htg25-u', 'Under', 1.28, 1000)] },
+      ] },
       // === CORNERS ===
-      { id: 'total-corners', name: 'Total Corners', specifier: '9.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 3100, volume: 7600, selections: [
-        sel('tc-o', 'Over 9.5', 1.90, 1700), sel('tc-u', 'Under 9.5', 1.90, 1400)] },
-      { id: 'total-corners-ht', name: 'HT Total Corners', specifier: '4.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 2200, volume: 5400, selections: [
-        sel('tcht-o', 'Over 4.5', 2.05, 1200), sel('tcht-u', 'Under 4.5', 1.78, 1000)] },
-      { id: 'home-total-corners', name: 'Home Corners', specifier: '4.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 1800, volume: 4200, selections: [
-        sel('htc-o', 'Over 4.5', 1.85, 1000), sel('htc-u', 'Under 4.5', 1.95, 800)] },
-      { id: 'away-total-corners', name: 'Away Corners', specifier: '4.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 1600, volume: 3800, selections: [
-        sel('atc-o', 'Over 4.5', 2.10, 900), sel('atc-u', 'Under 4.5', 1.72, 700)] },
-      { id: 'corner-handicap', name: 'Corner Handicap', specifier: '-1.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 2600, volume: 6200, selections: [
-        sel('ch-1', 'Man Utd -1.5', 2.30, 1400), sel('ch-2', 'Liverpool +1.5', 1.60, 1200)] },
-      { id: 'first-corner', name: 'First Corner', group: 'corners', status: 'open', settled: null, favorite: false, liability: 2400, volume: 5800, selections: [
+      { id: 'total-corners', name: 'Total Corners', group: 'corners', status: 'open', favorite: false, liability: 7750, volume: 19000, lines: [
+        { id: 'tc-7.5', specifier: '7.5', status: 'open', settled: null, selections: [sel('tc75-o', 'Over', 1.40, 1800), sel('tc75-u', 'Under', 2.90, 1200)] },
+        { id: 'tc-8.5', specifier: '8.5', status: 'open', settled: null, selections: [sel('tc85-o', 'Over', 1.62, 1600), sel('tc85-u', 'Under', 2.30, 1100)] },
+        { id: 'tc-9.5', specifier: '9.5', status: 'open', settled: null, selections: [sel('tc95-o', 'Over', 1.90, 1700), sel('tc95-u', 'Under', 1.90, 1400)] },
+        { id: 'tc-10.5', specifier: '10.5', status: 'open', settled: null, selections: [sel('tc105-o', 'Over', 2.30, 1000), sel('tc105-u', 'Under', 1.62, 950)] },
+        { id: 'tc-11.5', specifier: '11.5', status: 'open', settled: null, selections: [sel('tc115-o', 'Over', 2.90, 700), sel('tc115-u', 'Under', 1.40, 600)] },
+      ] },
+      { id: 'total-corners-ht', name: 'HT Total Corners', group: 'corners', status: 'open', favorite: false, liability: 5500, volume: 13500, lines: [
+        { id: 'tcht-3.5', specifier: '3.5', status: 'open', settled: null, selections: [sel('tcht35-o', 'Over', 1.50, 1100), sel('tcht35-u', 'Under', 2.55, 800)] },
+        { id: 'tcht-4.5', specifier: '4.5', status: 'open', settled: null, selections: [sel('tcht45-o', 'Over', 2.05, 1200), sel('tcht45-u', 'Under', 1.78, 1000)] },
+        { id: 'tcht-5.5', specifier: '5.5', status: 'open', settled: null, selections: [sel('tcht55-o', 'Over', 2.80, 700), sel('tcht55-u', 'Under', 1.42, 700)] },
+      ] },
+      { id: 'home-total-corners', name: 'Home Corners', group: 'corners', status: 'open', favorite: false, liability: 4500, volume: 10500, lines: [
+        { id: 'htc-3.5', specifier: '3.5', status: 'open', settled: null, selections: [sel('htc35-o', 'Over', 1.48, 900), sel('htc35-u', 'Under', 2.65, 700)] },
+        { id: 'htc-4.5', specifier: '4.5', status: 'open', settled: null, selections: [sel('htc45-o', 'Over', 1.85, 1000), sel('htc45-u', 'Under', 1.95, 800)] },
+        { id: 'htc-5.5', specifier: '5.5', status: 'open', settled: null, selections: [sel('htc55-o', 'Over', 2.50, 600), sel('htc55-u', 'Under', 1.52, 500)] },
+      ] },
+      { id: 'away-total-corners', name: 'Away Corners', group: 'corners', status: 'open', favorite: false, liability: 4000, volume: 9500, lines: [
+        { id: 'atc-3.5', specifier: '3.5', status: 'open', settled: null, selections: [sel('atc35-o', 'Over', 1.55, 850), sel('atc35-u', 'Under', 2.45, 650)] },
+        { id: 'atc-4.5', specifier: '4.5', status: 'open', settled: null, selections: [sel('atc45-o', 'Over', 2.10, 900), sel('atc45-u', 'Under', 1.72, 700)] },
+        { id: 'atc-5.5', specifier: '5.5', status: 'open', settled: null, selections: [sel('atc55-o', 'Over', 2.80, 500), sel('atc55-u', 'Under', 1.42, 400)] },
+      ] },
+      { id: 'corner-handicap', name: 'Corner Handicap', group: 'corners', status: 'open', favorite: false, liability: 6500, volume: 15500, lines: [
+        { id: 'ch-m0.5', specifier: '-0.5', status: 'open', settled: null, selections: [sel('ch05-1', 'Man Utd -0.5', 1.90, 1200), sel('ch05-2', 'Liverpool +0.5', 1.90, 1000)] },
+        { id: 'ch-m1.5', specifier: '-1.5', status: 'open', settled: null, selections: [sel('ch15-1', 'Man Utd -1.5', 2.30, 1400), sel('ch15-2', 'Liverpool +1.5', 1.60, 1200)] },
+        { id: 'ch-m2.5', specifier: '-2.5', status: 'open', settled: null, selections: [sel('ch25-1', 'Man Utd -2.5', 3.10, 800), sel('ch25-2', 'Liverpool +2.5', 1.35, 900)] },
+      ] },
+      { id: 'first-corner', name: 'First Corner', group: 'corners', status: 'open', favorite: false, liability: 2400, volume: 5800, selections: [
         sel('fc-1', 'Man Utd', 1.85, 1400), sel('fc-2', 'Liverpool', 1.95, 1000)] },
-      { id: 'last-corner', name: 'Last Corner', group: 'corners', status: 'open', settled: null, favorite: false, liability: 1500, volume: 3600, selections: [
+      { id: 'last-corner', name: 'Last Corner', group: 'corners', status: 'open', favorite: false, liability: 1500, volume: 3600, selections: [
         sel('lc-1', 'Man Utd', 1.90, 800), sel('lc-2', 'Liverpool', 1.90, 700)] },
-      { id: 'corner-race', name: 'Corner Race To', specifier: '5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 1900, volume: 4500, selections: [
+      { id: 'corner-race', name: 'Corner Race To', specifier: '5', group: 'corners', status: 'open', favorite: false, liability: 1900, volume: 4500, selections: [
         sel('cr-1', 'Man Utd', 2.40, 700), sel('cr-2', 'Liverpool', 2.60, 600), sel('cr-none', 'Neither', 4.50, 600)] },
       // === CARDS ===
-      { id: 'total-cards', name: 'Total Cards', specifier: '3.5', group: 'cards', status: 'open', settled: null, favorite: false, liability: 2100, volume: 5200, selections: [
-        sel('tcard-o', 'Over 3.5', 1.65, 1200), sel('tcard-u', 'Under 3.5', 2.25, 900)] },
-      { id: 'home-total-cards', name: 'Home Cards', specifier: '1.5', group: 'cards', status: 'open', settled: null, favorite: false, liability: 1400, volume: 3400, selections: [
-        sel('htcard-o', 'Over 1.5', 1.80, 800), sel('htcard-u', 'Under 1.5', 2.00, 600)] },
-      { id: 'away-total-cards', name: 'Away Cards', specifier: '1.5', group: 'cards', status: 'open', settled: null, favorite: false, liability: 1300, volume: 3100, selections: [
-        sel('atcard-o', 'Over 1.5', 1.75, 750), sel('atcard-u', 'Under 1.5', 2.05, 550)] },
-      { id: 'first-card', name: 'First Card', group: 'cards', status: 'open', settled: null, favorite: false, liability: 1800, volume: 4200, selections: [
+      { id: 'total-cards', name: 'Total Cards', group: 'cards', status: 'open', favorite: false, liability: 5250, volume: 13000, lines: [
+        { id: 'tcard-2.5', specifier: '2.5', status: 'open', settled: null, selections: [sel('tcard25-o', 'Over', 1.30, 1100), sel('tcard25-u', 'Under', 3.40, 600)] },
+        { id: 'tcard-3.5', specifier: '3.5', status: 'open', settled: null, selections: [sel('tcard35-o', 'Over', 1.65, 1200), sel('tcard35-u', 'Under', 2.25, 900)] },
+        { id: 'tcard-4.5', specifier: '4.5', status: 'open', settled: null, selections: [sel('tcard45-o', 'Over', 2.20, 700), sel('tcard45-u', 'Under', 1.65, 550)] },
+        { id: 'tcard-5.5', specifier: '5.5', status: 'open', settled: null, selections: [sel('tcard55-o', 'Over', 3.20, 400), sel('tcard55-u', 'Under', 1.33, 300)] },
+      ] },
+      { id: 'home-total-cards', name: 'Home Cards', group: 'cards', status: 'open', favorite: false, liability: 3500, volume: 8500, lines: [
+        { id: 'htcard-0.5', specifier: '0.5', status: 'open', settled: null, selections: [sel('htcard05-o', 'Over', 1.15, 600), sel('htcard05-u', 'Under', 5.50, 300)] },
+        { id: 'htcard-1.5', specifier: '1.5', status: 'open', settled: null, selections: [sel('htcard15-o', 'Over', 1.80, 800), sel('htcard15-u', 'Under', 2.00, 600)] },
+        { id: 'htcard-2.5', specifier: '2.5', status: 'open', settled: null, selections: [sel('htcard25-o', 'Over', 3.00, 500), sel('htcard25-u', 'Under', 1.38, 400)] },
+      ] },
+      { id: 'away-total-cards', name: 'Away Cards', group: 'cards', status: 'open', favorite: false, liability: 3250, volume: 7750, lines: [
+        { id: 'atcard-0.5', specifier: '0.5', status: 'open', settled: null, selections: [sel('atcard05-o', 'Over', 1.18, 550), sel('atcard05-u', 'Under', 5.00, 280)] },
+        { id: 'atcard-1.5', specifier: '1.5', status: 'open', settled: null, selections: [sel('atcard15-o', 'Over', 1.75, 750), sel('atcard15-u', 'Under', 2.05, 550)] },
+        { id: 'atcard-2.5', specifier: '2.5', status: 'open', settled: null, selections: [sel('atcard25-o', 'Over', 2.90, 450), sel('atcard25-u', 'Under', 1.40, 370)] },
+      ] },
+      { id: 'first-card', name: 'First Card', group: 'cards', status: 'open', favorite: false, liability: 1800, volume: 4200, selections: [
         sel('fcard-1', 'Man Utd', 2.00, 900), sel('fcard-2', 'Liverpool', 1.80, 900)] },
-      { id: 'player-card', name: 'Player To Be Carded', group: 'cards', status: 'open', settled: null, favorite: false, liability: 5600, volume: 14200, selections: [
+      { id: 'player-card', name: 'Player To Be Carded', group: 'cards', status: 'open', favorite: false, liability: 5600, volume: 14200, selections: [
         sel('pc-cas', 'Casemiro', 2.50, 1200), sel('pc-mac', 'Mac Allister', 2.80, 1000), sel('pc-bru', 'Bruno', 3.20, 800),
         sel('pc-szo', 'Szoboszlai', 3.50, 700), sel('pc-dal', 'Dalot', 3.00, 900), sel('pc-rob', 'Robertson', 3.30, 600),
         sel('pc-eri', 'Eriksen', 4.00, 400)] },
-      // === HANDICAP ===
-      { id: 'asian-handicap', name: 'Asian Handicap', specifier: '-0.5', group: 'handicap', status: 'open', settled: null, favorite: true, liability: 15300, volume: 38900, selections: [
-        sel('ah-1', 'Man Utd -0.5', 2.60, 8200), sel('ah-2', 'Liverpool +0.5', 1.55, 7100)] },
-      { id: 'asian-handicap-1.5', name: 'Asian Handicap', specifier: '-1.5', group: 'handicap', status: 'open', settled: null, favorite: false, liability: 6800, volume: 16400, selections: [
-        sel('ah15-1', 'Man Utd -1.5', 4.20, 3200), sel('ah15-2', 'Liverpool +1.5', 1.22, 3600)] },
-      { id: 'european-handicap', name: 'European Handicap', specifier: '0:1', group: 'handicap', status: 'open', settled: null, favorite: false, liability: 4800, volume: 11200, selections: [
-        sel('eh-1', 'Man Utd', 4.20, 1600), sel('eh-x', 'Draw', 3.50, 1400), sel('eh-2', 'Liverpool', 1.80, 1800)] },
-      { id: 'european-handicap-2', name: 'European Handicap', specifier: '1:0', group: 'handicap', status: 'open', settled: null, favorite: false, liability: 3900, volume: 9400, selections: [
-        sel('eh2-1', 'Man Utd', 1.55, 1800), sel('eh2-x', 'Draw', 3.80, 1000), sel('eh2-2', 'Liverpool', 5.00, 1100)] },
+      // === HANDICAP (line-based) ===
+      { id: 'asian-handicap', name: 'Asian Handicap', group: 'handicap', status: 'open', favorite: true, liability: 22100, volume: 55300, lines: [
+        { id: 'ah-0.5', specifier: '-0.5', status: 'open', settled: null, selections: [sel('ah-1', 'Man Utd -0.5', 2.60, 8200), sel('ah-2', 'Liverpool +0.5', 1.55, 7100)] },
+        { id: 'ah-1.5', specifier: '-1.5', status: 'open', settled: null, selections: [sel('ah15-1', 'Man Utd -1.5', 4.20, 3200), sel('ah15-2', 'Liverpool +1.5', 1.22, 3600)] },
+      ] },
+      { id: 'european-handicap', name: 'European Handicap', group: 'handicap', status: 'open', favorite: false, liability: 8700, volume: 20600, lines: [
+        { id: 'eh-01', specifier: '0:1', status: 'open', settled: null, selections: [sel('eh-1', 'Man Utd', 4.20, 1600), sel('eh-x', 'Draw', 3.50, 1400), sel('eh-2', 'Liverpool', 1.80, 1800)] },
+        { id: 'eh-10', specifier: '1:0', status: 'open', settled: null, selections: [sel('eh2-1', 'Man Utd', 1.55, 1800), sel('eh2-x', 'Draw', 3.80, 1000), sel('eh2-2', 'Liverpool', 5.00, 1100)] },
+      ] },
       // === SPECIALS ===
-      { id: 'penalty-awarded', name: 'Penalty Awarded', group: 'specials', status: 'open', settled: null, favorite: false, liability: 2200, volume: 5400, selections: [
+      { id: 'penalty-awarded', name: 'Penalty Awarded', group: 'specials', status: 'open', favorite: false, liability: 2200, volume: 5400, selections: [
         sel('pen-y', 'Yes', 2.80, 1300), sel('pen-n', 'No', 1.42, 900)] },
-      { id: 'clean-sheet-home', name: 'Home Clean Sheet', group: 'specials', status: 'closed', settled: null, favorite: false, liability: 3100, volume: 7600, selections: [
+      { id: 'clean-sheet-home', name: 'Home Clean Sheet', group: 'specials', status: 'closed', favorite: false, liability: 3100, volume: 7600, selections: [
         sel('csh-y', 'Yes', 3.40, 1600), sel('csh-n', 'No', 1.30, 1500)] },
-      { id: 'clean-sheet-away', name: 'Away Clean Sheet', group: 'specials', status: 'closed', settled: null, favorite: false, liability: 2800, volume: 6800, selections: [
+      { id: 'clean-sheet-away', name: 'Away Clean Sheet', group: 'specials', status: 'closed', favorite: false, liability: 2800, volume: 6800, selections: [
         sel('csa-y', 'Yes', 3.80, 1400), sel('csa-n', 'No', 1.26, 1400)] },
-      { id: 'win-to-nil-home', name: 'Home Win To Nil', group: 'specials', status: 'open', settled: null, favorite: false, liability: 1800, volume: 4400, selections: [
+      { id: 'win-to-nil-home', name: 'Home Win To Nil', group: 'specials', status: 'open', favorite: false, liability: 1800, volume: 4400, selections: [
         sel('wtnh-y', 'Yes', 4.50, 900), sel('wtnh-n', 'No', 1.18, 900)] },
-      { id: 'win-to-nil-away', name: 'Away Win To Nil', group: 'specials', status: 'open', settled: null, favorite: false, liability: 1600, volume: 3800, selections: [
+      { id: 'win-to-nil-away', name: 'Away Win To Nil', group: 'specials', status: 'open', favorite: false, liability: 1600, volume: 3800, selections: [
         sel('wtna-y', 'Yes', 5.20, 800), sel('wtna-n', 'No', 1.14, 800)] },
-      { id: 'red-card', name: 'Red Card In Match', group: 'specials', status: 'open', settled: null, favorite: false, liability: 1200, volume: 2800, selections: [
+      { id: 'red-card', name: 'Red Card In Match', group: 'specials', status: 'open', favorite: false, liability: 1200, volume: 2800, selections: [
         sel('rc-y', 'Yes', 5.50, 600), sel('rc-n', 'No', 1.12, 600)] },
-      { id: 'var-decision', name: 'VAR Decision', group: 'specials', status: 'suspended', settled: null, favorite: false, liability: 900, volume: 2100, selections: [
+      { id: 'var-decision', name: 'VAR Decision', group: 'specials', status: 'suspended', favorite: false, liability: 900, volume: 2100, selections: [
         susSel('var-y', 'Yes', 2.20, 500), susSel('var-n', 'No', 1.65, 400)] },
       // === CORRECT SCORE ===
-      { id: 'correct-score', name: 'Correct Score', group: 'correct_score', status: 'open', settled: null, favorite: false, liability: 8400, volume: 20600, selections: [
+      { id: 'correct-score', name: 'Correct Score', group: 'correct_score', status: 'open', favorite: false, liability: 8400, volume: 20600, selections: [
         sel('cs-10', '1-0', 6.50, 1200), sel('cs-20', '2-0', 10.00, 600), sel('cs-21', '2-1', 7.50, 900),
         sel('cs-00', '0-0', 8.50, 500), sel('cs-11', '1-1', 5.80, 1400), sel('cs-22', '2-2', 12.00, 400),
         sel('cs-01', '0-1', 7.00, 1000), sel('cs-02', '0-2', 11.00, 500), sel('cs-12', '1-2', 8.00, 800),
         sel('cs-30', '3-0', 18.00, 200), sel('cs-31', '3-1', 14.00, 300), sel('cs-32', '3-2', 22.00, 150),
         sel('cs-oth', 'Other', 15.00, 450)] },
-      { id: 'correct-score-ht', name: 'HT Correct Score', group: 'correct_score', status: 'settled', settled: 'csht-11', favorite: false, liability: 4200, volume: 10400, selections: [
+      { id: 'correct-score-ht', name: 'HT Correct Score', group: 'correct_score', status: 'settled', favorite: false, liability: 4200, volume: 10400, selections: [
         sel('csht-00', '0-0', 3.20, 1200), sel('csht-10', '1-0', 5.50, 700), sel('csht-01', '0-1', 6.00, 600),
-        sel('csht-11', '1-1', 8.50, 400), sel('csht-20', '2-0', 14.00, 250), sel('csht-02', '0-2', 16.00, 200)] },
+        sel('csht-11', '1-1', 8.50, 400), sel('csht-20', '2-0', 14.00, 250), sel('csht-02', '0-2', 16.00, 200)],
+        settled: 'csht-11' },
       // === PLAYER ===
-      { id: 'anytime-scorer', name: 'Anytime Goalscorer', group: 'player', status: 'open', settled: null, favorite: true, liability: 18200, volume: 44800, selections: [
+      { id: 'anytime-scorer', name: 'Anytime Goalscorer', group: 'player', status: 'open', favorite: true, liability: 18200, volume: 44800, selections: [
         sel('as-ras', 'Rashford', 3.20, 3200), sel('as-hoj', 'Hojlund', 2.80, 3600), sel('as-bru', 'Bruno', 4.50, 2000),
         sel('as-gar', 'Garnacho', 4.80, 1800), sel('as-sal', 'Salah', 2.50, 4000), sel('as-nun', 'Nunez', 3.00, 3000),
         sel('as-jot', 'Jota', 3.50, 2400), sel('as-dia', 'Diaz', 4.00, 2200)] },
-      { id: 'first-scorer', name: 'First Goalscorer', group: 'player', status: 'open', settled: null, favorite: false, liability: 9400, volume: 23200, selections: [
+      { id: 'first-scorer', name: 'First Goalscorer', group: 'player', status: 'open', favorite: false, liability: 9400, volume: 23200, selections: [
         sel('fs-ras', 'Rashford', 7.50, 1400), sel('fs-hoj', 'Hojlund', 6.50, 1600), sel('fs-bru', 'Bruno', 10.00, 800),
         sel('fs-sal', 'Salah', 5.50, 2000), sel('fs-nun', 'Nunez', 6.00, 1500), sel('fs-jot', 'Jota', 8.00, 1100),
         sel('fs-none', 'No Goalscorer', 8.50, 1000)] },
-      { id: 'last-scorer', name: 'Last Goalscorer', group: 'player', status: 'open', settled: null, favorite: false, liability: 5600, volume: 13800, selections: [
+      { id: 'last-scorer', name: 'Last Goalscorer', group: 'player', status: 'open', favorite: false, liability: 5600, volume: 13800, selections: [
         sel('ls-ras', 'Rashford', 7.00, 900), sel('ls-hoj', 'Hojlund', 6.00, 1000), sel('ls-sal', 'Salah', 5.00, 1200),
         sel('ls-nun', 'Nunez', 5.50, 1100), sel('ls-none', 'No Goalscorer', 8.50, 1400)] },
-      { id: 'player-shots', name: 'Player Shots OT', specifier: '1.5+', group: 'player', status: 'open', settled: null, favorite: false, liability: 4200, volume: 10200, selections: [
+      { id: 'player-shots', name: 'Player Shots OT', specifier: '1.5+', group: 'player', status: 'open', favorite: false, liability: 4200, volume: 10200, selections: [
         sel('ps-sal', 'Salah 1.5+', 1.60, 1200), sel('ps-bru', 'Bruno 1.5+', 2.10, 800), sel('ps-ras', 'Rashford 1.5+', 2.00, 900),
         sel('ps-nun', 'Nunez 1.5+', 1.80, 1000), sel('ps-hoj', 'Hojlund 1.5+', 2.30, 300)] },
     ];
@@ -749,6 +843,25 @@
     function formatOdds(val) { return val.toFixed(2); }
     function formatTime(date) {
       return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // Helper: get all selections from a market (flat or line-based)
+    function getAllSelections(market) {
+      if (market.lines) {
+        return market.lines.flatMap(l => l.selections);
+      }
+      return market.selections || [];
+    }
+
+    // Helper: compute overall status for a line-based market
+    function computeLineMarketStatus(market) {
+      if (!market.lines) return market.status;
+      const lines = market.lines;
+      if (lines.every(l => l.status === 'settled')) return 'settled';
+      if (lines.every(l => l.status === 'closed')) return 'closed';
+      if (lines.every(l => l.status === 'suspended' || l.status === 'settled' || l.status === 'closed')) return 'suspended';
+      if (lines.some(l => l.status === 'open')) return 'open';
+      return market.status;
     }
 
     function generateInitialHistory(markets) {
@@ -771,7 +884,7 @@
       const h = {};
       const now = new Date();
       markets.forEach(m => {
-        m.selections.forEach(s => {
+        getAllSelections(m).forEach(s => {
           const entries = [];
           for (let i = 4; i >= 0; i--) {
             const drift = (Math.random() - 0.5) * 0.3;
@@ -821,10 +934,22 @@
     function MatchHero({ markets, matchTime, onOpenAll, onSuspendAll }) {
       const totalLiability = markets.reduce((s, m) => s + m.liability, 0);
       const totalVolume = markets.reduce((s, m) => s + m.volume, 0);
-      const openCount = markets.filter(m => m.status === 'open').length;
-      const suspendedCount = markets.filter(m => m.status === 'suspended').length;
-      const settledCount = markets.filter(m => m.status === 'settled').length;
-      const voidCount = markets.filter(m => m.status === 'closed').length;
+      const openCount = markets.filter(m => {
+        if (m.lines) return computeLineMarketStatus(m) === 'open';
+        return m.status === 'open';
+      }).length;
+      const suspendedCount = markets.filter(m => {
+        if (m.lines) return computeLineMarketStatus(m) === 'suspended';
+        return m.status === 'suspended';
+      }).length;
+      const settledCount = markets.filter(m => {
+        if (m.lines) return computeLineMarketStatus(m) === 'settled';
+        return m.status === 'settled';
+      }).length;
+      const voidCount = markets.filter(m => {
+        if (m.lines) return computeLineMarketStatus(m) === 'closed';
+        return m.status === 'closed';
+      }).length;
       return (
         <div className="match-hero">
           <div className="match-hero__teams">
@@ -890,10 +1015,10 @@
 
     // Left Panel
     function LeftPanel({ parts, markets, onPartAction }) {
-      const openCount = markets.filter(m => m.status === 'open').length;
-      const suspendedCount = markets.filter(m => m.status === 'suspended').length;
-      const settledCount = markets.filter(m => m.status === 'settled').length;
-      const closedCount = markets.filter(m => m.status === 'closed').length;
+      const openCount = markets.filter(m => m.lines ? computeLineMarketStatus(m) === 'open' : m.status === 'open').length;
+      const suspendedCount = markets.filter(m => m.lines ? computeLineMarketStatus(m) === 'suspended' : m.status === 'suspended').length;
+      const settledCount = markets.filter(m => m.lines ? computeLineMarketStatus(m) === 'settled' : m.status === 'settled').length;
+      const closedCount = markets.filter(m => m.lines ? computeLineMarketStatus(m) === 'closed' : m.status === 'closed').length;
       return (
         <div className="left-panel">
           <div className="panel-section">
@@ -1004,20 +1129,138 @@
       );
     }
 
+    // Line Monitor Row
+    function LineMonitorRow({ line, onToggleSelection, marketId }) {
+      const specClass = line.status === 'settled' ? 'line-specifier--settled' : line.status === 'closed' ? 'line-specifier--void' : '';
+      return (
+        <div className={`line-row ${line.status === 'settled' || line.status === 'closed' ? 'line-row--settled' : ''}`}>
+          <span className={`line-specifier ${specClass}`}>{line.specifier}</span>
+          <div className="line-sels">
+            {line.selections.map(s => (
+              <MonitorSelection key={s.id} s={s} marketSettled={line.settled}
+                onToggle={id => onToggleSelection(marketId, id, line.id)} />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Line Settle Row
+    function LineSettleRow({ line, marketId, lineSettlingInfo, lineCancellingInfo,
+      onStartLineSettle, onStopLineSettle, onStartLineCancel, onStopLineCancel, onRollbackLine }) {
+      const [settleSelection, setSettleSelection] = useState(null);
+      const isSettling = !!lineSettlingInfo;
+      const isCancelling = !!lineCancellingInfo;
+
+      const prevStatus = useRef(line.status);
+      useEffect(() => {
+        if (prevStatus.current !== line.status) {
+          setSettleSelection(null);
+          prevStatus.current = line.status;
+        }
+      }, [line.status]);
+
+      const handleSettleClick = (selId) => {
+        if (line.status === 'settled' || line.status === 'closed') return;
+        if (isSettling) return;
+        setSettleSelection(selId);
+      };
+
+      const confirmSettle = () => {
+        if (settleSelection) {
+          onStartLineSettle(marketId, line.id, settleSelection);
+          setSettleSelection(null);
+        }
+      };
+
+      const specClass = line.status === 'settled' ? 'line-specifier--settled' : line.status === 'closed' ? 'line-specifier--void' : '';
+      const rowClass = isSettling ? 'line-row--settling' : isCancelling ? 'line-row--cancelling' : (line.status === 'settled' || line.status === 'closed') ? 'line-row--settled' : '';
+
+      return (
+        <div className={`line-row ${rowClass}`}>
+          <span className={`line-specifier ${specClass}`}>{line.specifier}</span>
+          <div className="line-sels">
+            {line.selections.map(s => {
+              const selected = settleSelection === s.id;
+              const isWinner = line.settled === s.id;
+              return (
+                <div key={s.id}
+                  className={`line-settle-sel ${selected ? 'line-settle-sel--selected' : ''} ${isWinner ? 'line-settle-sel--winner' : ''}`}
+                  onClick={() => handleSettleClick(s.id)}>
+                  <div className="line-settle-sel__radio">
+                    {(selected || isWinner) && <div className="line-settle-sel__radio-dot"></div>}
+                  </div>
+                  <span className="line-settle-sel__name">{s.name}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="line-actions">
+            {isSettling && (
+              <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopLineSettle(marketId, line.id)}>Stop</button>
+            )}
+            {isCancelling && (
+              <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopLineCancel(marketId, line.id)}>Stop</button>
+            )}
+            {!isSettling && !isCancelling && (
+              <>
+                {settleSelection && line.status !== 'settled' && (
+                  <button className="mkt-ctrl mkt-ctrl--settle" onClick={confirmSettle}>Settle</button>
+                )}
+                {(line.status === 'settled' || line.status === 'closed') && (
+                  <button className="mkt-ctrl mkt-ctrl--rollback" onClick={() => onRollbackLine(marketId, line.id)}>Roll</button>
+                )}
+                {line.status !== 'settled' && line.status !== 'closed' && (
+                  <button className="mkt-ctrl mkt-ctrl--close" onClick={() => onStartLineCancel(marketId, line.id)}>Void</button>
+                )}
+              </>
+            )}
+          </div>
+          {isSettling && (
+            <div className="line-countdown line-countdown--orange" key={lineSettlingInfo.startTime} style={{position:'absolute',bottom:0,left:0,right:0}}></div>
+          )}
+          {isCancelling && (
+            <div className="line-countdown line-countdown--red" key={lineCancellingInfo.startTime} style={{position:'absolute',bottom:0,left:0,right:0}}></div>
+          )}
+        </div>
+      );
+    }
+
     // Market Card
     function MarketCard({ market, mode, onSetMode, onToggleFavorite, onSetStatus, onToggleSelection,
       onShowHistory, onShowOddsHistory, onStartSettle, onStopSettle, onStartCancel, onStopCancel,
-      onRollback, settlingInfo, cancellingInfo }) {
+      onRollback, settlingInfo, cancellingInfo,
+      lineSettlingMap, lineCancellingMap,
+      onStartLineSettle, onStopLineSettle, onStartLineCancel, onStopLineCancel, onRollbackLine }) {
       const [collapsed, setCollapsed] = useState(false);
       const [settleSelection, setSettleSelection] = useState(null);
-      const n = market.selections.length;
+      const isLineBased = !!market.lines;
+
+      // For flat markets
+      const selections = market.selections || [];
+      const n = selections.length;
       const gridClass = n === 2 ? 'sel-grid--2' : n === 3 ? 'sel-grid--3' : n > 6 ? 'sel-grid--many' : 'sel-grid--3';
 
       const isSettling = !!settlingInfo;
       const isCancelling = !!cancellingInfo;
-      const statusClass = isSettling ? 'market-card--settling' : isCancelling ? 'market-card--cancelling' : `market-card--${market.status}`;
 
-      // Reset settleSelection when market status changes (e.g. after rollback or settlement)
+      // Compute effective status for line-based markets
+      let effectiveStatus = market.status;
+      let badgeText = market.status;
+      if (isLineBased) {
+        const hasLineSettling = market.lines.some(l => lineSettlingMap && lineSettlingMap[l.id]);
+        const hasLineCancelling = market.lines.some(l => lineCancellingMap && lineCancellingMap[l.id]);
+        if (hasLineSettling) { badgeText = 'settling...'; effectiveStatus = 'settling'; }
+        else if (hasLineCancelling) { badgeText = 'cancelling...'; effectiveStatus = 'cancelling'; }
+        else { effectiveStatus = computeLineMarketStatus(market); badgeText = effectiveStatus; }
+      } else {
+        if (isSettling) { badgeText = 'settling...'; effectiveStatus = 'settling'; }
+        else if (isCancelling) { badgeText = 'cancelling...'; effectiveStatus = 'cancelling'; }
+      }
+
+      const statusClass = effectiveStatus === 'settling' ? 'market-card--settling' : effectiveStatus === 'cancelling' ? 'market-card--cancelling' : `market-card--${effectiveStatus}`;
+
+      // Reset settleSelection when market status changes
       const prevStatus = useRef(market.status);
       useEffect(() => {
         if (prevStatus.current !== market.status) {
@@ -1048,9 +1291,10 @@
             <span className="market-card__name">
               {market.name}
               {market.specifier && <span className="market-card__specifier">{market.specifier}</span>}
+              {isLineBased && <span className="market-card__specifier">{market.lines.length} lines</span>}
             </span>
-            <span className={`market-card__badge market-card__badge--${market.status}`}>
-              {isSettling ? 'settling...' : isCancelling ? 'cancelling...' : market.status}
+            <span className={`market-card__badge market-card__badge--${effectiveStatus === 'settling' ? 'settling' : effectiveStatus === 'cancelling' ? 'cancelling' : effectiveStatus}`}>
+              {badgeText}
             </span>
             <div className="market-card__mode-toggle" onClick={e => e.stopPropagation()}>
               <button className={`market-card__mode-btn ${mode === 'monitor' ? 'market-card__mode-btn--active' : ''}`}
@@ -1061,43 +1305,69 @@
             <span className={`market-card__chevron ${collapsed ? 'market-card__chevron--collapsed' : ''}`}>{'\u25BE'}</span>
           </div>
           <div className={`market-card__body ${collapsed ? 'market-card__body--hidden' : ''}`}>
-            {mode === 'monitor' ? (
-              <div className={`sel-grid ${gridClass}`}>
-                {market.selections.map(s => (
-                  <MonitorSelection key={s.id} s={s} marketSettled={market.settled}
-                    onToggle={id => onToggleSelection(market.id, id)} />
-                ))}
-              </div>
+            {isLineBased ? (
+              /* Line-based market rendering */
+              mode === 'monitor' ? (
+                <div style={{display:'flex',flexDirection:'column',gap:0}}>
+                  {market.lines.map(line => (
+                    <LineMonitorRow key={line.id} line={line} onToggleSelection={onToggleSelection} marketId={market.id} />
+                  ))}
+                </div>
+              ) : (
+                <div style={{display:'flex',flexDirection:'column',gap:0}}>
+                  {market.lines.map(line => (
+                    <LineSettleRow key={line.id} line={line} marketId={market.id}
+                      lineSettlingInfo={lineSettlingMap && lineSettlingMap[line.id]}
+                      lineCancellingInfo={lineCancellingMap && lineCancellingMap[line.id]}
+                      onStartLineSettle={onStartLineSettle}
+                      onStopLineSettle={onStopLineSettle}
+                      onStartLineCancel={onStartLineCancel}
+                      onStopLineCancel={onStopLineCancel}
+                      onRollbackLine={onRollbackLine} />
+                  ))}
+                </div>
+              )
             ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:3}}>
-                {market.selections.map(s => (
-                  <SettleSelection key={s.id} s={s}
-                    selected={settleSelection === s.id}
-                    isWinner={market.settled === s.id}
-                    onSelect={() => handleSettleClick(s.id)} />
-                ))}
-                {settleSelection && !isSettling && market.status !== 'settled' && (
-                  <button className="btn btn--sm" style={{background:'var(--settled)',color:'#000',borderColor:'var(--settled)',marginTop:4,alignSelf:'flex-end'}}
-                    onClick={confirmSettle}>Confirm Settle</button>
-                )}
-              </div>
+              /* Flat market rendering */
+              mode === 'monitor' ? (
+                <div className={`sel-grid ${gridClass}`}>
+                  {selections.map(s => (
+                    <MonitorSelection key={s.id} s={s} marketSettled={market.settled}
+                      onToggle={id => onToggleSelection(market.id, id)} />
+                  ))}
+                </div>
+              ) : (
+                <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                  {selections.map(s => (
+                    <SettleSelection key={s.id} s={s}
+                      selected={settleSelection === s.id}
+                      isWinner={market.settled === s.id}
+                      onSelect={() => handleSettleClick(s.id)} />
+                  ))}
+                  {settleSelection && !isSettling && market.status !== 'settled' && (
+                    <button className="btn btn--sm" style={{background:'var(--settled)',color:'#000',borderColor:'var(--settled)',marginTop:4,alignSelf:'flex-end'}}
+                      onClick={confirmSettle}>Confirm Settle</button>
+                  )}
+                </div>
+              )
             )}
 
-            {isSettling && (
+            {/* Flat market countdown bars */}
+            {!isLineBased && isSettling && (
               <div className="countdown-bar" key={settlingInfo.startTime}></div>
             )}
-            {isCancelling && (
+            {!isLineBased && isCancelling && (
               <div className="countdown-bar countdown-bar--red" key={cancellingInfo.startTime}></div>
             )}
 
             <div className="mkt-controls">
-              {isSettling && (
+              {!isLineBased && isSettling && (
                 <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopSettle(market.id)}>Stop</button>
               )}
-              {isCancelling && (
+              {!isLineBased && isCancelling && (
                 <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopCancel(market.id)}>Stop</button>
               )}
-              {!isSettling && !isCancelling && (
+              {!isLineBased && !isSettling && !isCancelling && (
                 <>
                   {market.status !== 'open' && market.status !== 'settled' && (
                     <button className="mkt-ctrl mkt-ctrl--open" onClick={() => onSetStatus(market.id, 'open')}>Open</button>
@@ -1114,11 +1384,21 @@
                   {market.status !== 'settled' && (
                     <button className="mkt-ctrl mkt-ctrl--close" onClick={() => onStartCancel(market.id)}>Cancel</button>
                   )}
-                  <button className="mkt-ctrl mkt-ctrl--history" onClick={() => onShowHistory(market.id)}>Hist</button>
-                  <button className="mkt-ctrl" style={{color:'var(--purple)',borderColor:'var(--purple-border)'}}
-                    onClick={() => onShowOddsHistory(market.id)}>Odds</button>
                 </>
               )}
+              {isLineBased && (
+                <>
+                  {effectiveStatus !== 'open' && effectiveStatus !== 'settled' && effectiveStatus !== 'settling' && effectiveStatus !== 'cancelling' && (
+                    <button className="mkt-ctrl mkt-ctrl--open" onClick={() => onSetStatus(market.id, 'open')}>Open All</button>
+                  )}
+                  {effectiveStatus === 'open' && (
+                    <button className="mkt-ctrl mkt-ctrl--suspend" onClick={() => onSetStatus(market.id, 'suspended')}>Susp All</button>
+                  )}
+                </>
+              )}
+              <button className="mkt-ctrl mkt-ctrl--history" onClick={() => onShowHistory(market.id)}>Hist</button>
+              <button className="mkt-ctrl" style={{color:'var(--purple)',borderColor:'var(--purple-border)'}}
+                onClick={() => onShowOddsHistory(market.id)}>Odds</button>
               <div className="mkt-controls__spacer"></div>
               <div className="mkt-controls__stats">
                 <span>L: <span>{formatCurrency(market.liability)}</span></span>
@@ -1162,7 +1442,8 @@
 
     // Odds History Modal
     function OddsHistoryModal({ market, oddsHistory, onClose }) {
-      const [selId, setSelId] = useState(market.selections[0]?.id);
+      const allSels = getAllSelections(market);
+      const [selId, setSelId] = useState(allSels[0]?.id);
       const entries = oddsHistory[selId] || [];
       return (
         <div className="overlay" onClick={onClose}>
@@ -1172,7 +1453,7 @@
               <button className="modal__close" onClick={onClose}>{'\u00D7'}</button>
             </div>
             <div className="odds-tabs">
-              {market.selections.map(s => (
+              {allSels.map(s => (
                 <button key={s.id} className={`odds-tab ${selId === s.id ? 'odds-tab--active' : ''}`}
                   onClick={() => setSelId(s.id)}>{s.name}</button>
               ))}
@@ -1201,13 +1482,15 @@
     }
 
     // Cancel Reason Modal
-    function CancelModal({ market, onConfirm, onClose }) {
+    function CancelModal({ market, lineId, onConfirm, onConfirmLine, onClose }) {
       const [reason, setReason] = useState('');
+      const lineName = lineId && market.lines ? market.lines.find(l => l.id === lineId)?.specifier : null;
+      const title = lineName ? `Cancel: ${market.name} (${lineName})` : `Cancel: ${market.name}`;
       return (
         <div className="overlay" onClick={onClose}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal__header">
-              <div className="modal__title">Cancel: {market.name}</div>
+              <div className="modal__title">{title}</div>
               <button className="modal__close" onClick={onClose}>{'\u00D7'}</button>
             </div>
             <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:8}}>Provide a reason for cancellation:</div>
@@ -1216,7 +1499,14 @@
             <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
               <button className="btn btn--ghost btn--sm" onClick={onClose}>Back</button>
               <button className="btn btn--danger btn--sm" style={{opacity: reason.trim() ? 1 : 0.4}}
-                onClick={() => reason.trim() && onConfirm(market.id, reason)} disabled={!reason.trim()}>
+                onClick={() => {
+                  if (!reason.trim()) return;
+                  if (lineId) {
+                    onConfirmLine(market.id, lineId, reason);
+                  } else {
+                    onConfirm(market.id, reason);
+                  }
+                }} disabled={!reason.trim()}>
                 Start Cancel (10s)
               </button>
             </div>
@@ -1237,7 +1527,7 @@
             <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:10}}>Suspend or open all markets within a group</div>
             {GROUP_KEYS.map(key => {
               const groupMarkets = markets.filter(m => m.group === key);
-              const openCount = groupMarkets.filter(m => m.status === 'open').length;
+              const openCount = groupMarkets.filter(m => m.lines ? computeLineMarketStatus(m) === 'open' : m.status === 'open').length;
               return (
                 <div className="group-item" key={key}>
                   <span>
@@ -1277,8 +1567,13 @@
       const [marketModes, setMarketModes] = useState({});
       const [settlingMap, setSettlingMap] = useState({});
       const [cancellingMap, setCancellingMap] = useState({});
+      // Line-level state
+      const [lineSettlingMap, setLineSettlingMap] = useState({});  // { lineId: { winnerId, startTime } }
+      const [lineCancellingMap, setLineCancellingMap] = useState({});  // { lineId: { reason, startTime } }
       const settleTimers = useRef({});
       const cancelTimers = useRef({});
+      const lineSettleTimers = useRef({});
+      const lineCancelTimers = useRef({});
       const searchRef = useRef(null);
 
       // Get mode for a market (per-market override or global)
@@ -1295,20 +1590,37 @@
         setMarketModes({});
       }, []);
 
-      // Live odds simulation
+      // Live odds simulation - handles both flat and line-based markets
       useEffect(() => {
         const interval = setInterval(() => {
           const updates = [];
           setMarkets(prev => {
-            const next = prev.map(m => ({ ...m, selections: m.selections.map(s => ({ ...s })) }));
+            const next = prev.map(m => {
+              if (m.lines) {
+                return { ...m, lines: m.lines.map(l => ({ ...l, selections: l.selections.map(s => ({ ...s })) })) };
+              }
+              return { ...m, selections: (m.selections || []).map(s => ({ ...s })) };
+            });
             const count = Math.floor(Math.random() * 3) + 1;
             for (let i = 0; i < count; i++) {
-              const open = next.filter(m => m.status === 'open');
+              // Pick a random open market
+              const open = next.filter(m => {
+                if (m.lines) return m.lines.some(l => l.status === 'open');
+                return m.status === 'open';
+              });
               if (!open.length) break;
               const m = open[Math.floor(Math.random() * open.length)];
-              const active = m.selections.filter(s => s.status === 'active');
-              if (!active.length) continue;
-              const s = active[Math.floor(Math.random() * active.length)];
+              let activeSels;
+              if (m.lines) {
+                const openLines = m.lines.filter(l => l.status === 'open');
+                if (!openLines.length) continue;
+                const line = openLines[Math.floor(Math.random() * openLines.length)];
+                activeSels = line.selections.filter(s => s.status === 'active');
+              } else {
+                activeSels = (m.selections || []).filter(s => s.status === 'active');
+              }
+              if (!activeSels.length) continue;
+              const s = activeSels[Math.floor(Math.random() * activeSels.length)];
               const change = (Math.random() - 0.48) * 0.12;
               const newOdds = Math.max(1.01, Math.round((s.odds + change) * 100) / 100);
               if (newOdds !== s.odds) {
@@ -1318,7 +1630,12 @@
                 updates.push({ selId: s.id, odds: newOdds });
               }
               s.liability = Math.max(0, s.liability + Math.floor((Math.random() - 0.3) * 200));
-              m.liability = m.selections.reduce((sum, s) => sum + s.liability, 0);
+              // Update market liability
+              if (m.lines) {
+                m.liability = m.lines.reduce((sum, l) => sum + l.selections.reduce((s2, sel) => s2 + sel.liability, 0), 0);
+              } else {
+                m.liability = (m.selections || []).reduce((sum, sel) => sum + sel.liability, 0);
+              }
               m.volume += Math.floor(Math.random() * 300);
             }
             return next;
@@ -1335,10 +1652,15 @@
         return () => clearInterval(interval);
       }, []);
 
-      // Clear direction arrows
+      // Clear direction arrows - handles both flat and line-based
       useEffect(() => {
         const interval = setInterval(() => {
-          setMarkets(prev => prev.map(m => ({ ...m, selections: m.selections.map(s => ({ ...s, direction: null })) })));
+          setMarkets(prev => prev.map(m => {
+            if (m.lines) {
+              return { ...m, lines: m.lines.map(l => ({ ...l, selections: l.selections.map(s => ({ ...s, direction: null })) })) };
+            }
+            return { ...m, selections: (m.selections || []).map(s => ({ ...s, direction: null })) };
+          }));
         }, 4000);
         return () => clearInterval(interval);
       }, []);
@@ -1364,11 +1686,13 @@
         return () => window.removeEventListener('keydown', handler);
       }, []);
 
-      // Cleanup timers on unmount
+      // Cleanup all timers on unmount
       useEffect(() => {
         return () => {
           Object.values(settleTimers.current).forEach(clearTimeout);
           Object.values(cancelTimers.current).forEach(clearTimeout);
+          Object.values(lineSettleTimers.current).forEach(clearTimeout);
+          Object.values(lineCancelTimers.current).forEach(clearTimeout);
         };
       }, []);
 
@@ -1385,27 +1709,38 @@
           return prev.map(m => {
             if (m.id !== id) return m;
             const selStatus = status === 'open' ? 'active' : 'suspended';
-            return { ...m, status, settled: status === 'open' ? null : m.settled, selections: m.selections.map(s => ({ ...s, status: selStatus })) };
+            if (m.lines) {
+              return { ...m, status, lines: m.lines.map(l => {
+                if (l.status === 'settled') return l; // don't change settled lines
+                return { ...l, status, selections: l.selections.map(s => ({ ...s, status: selStatus })) };
+              }) };
+            }
+            return { ...m, status, settled: status === 'open' ? null : m.settled, selections: (m.selections || []).map(s => ({ ...s, status: selStatus })) };
           });
         });
         setToast({ message: `Market ${status}`, type: status === 'open' ? 'success' : 'warning' });
       }, []);
 
-      const toggleSelection = useCallback((mId, sId) => {
+      const toggleSelection = useCallback((mId, sId, lineId) => {
         setMarkets(prev => prev.map(m => {
           if (m.id !== mId) return m;
-          return { ...m, selections: m.selections.map(s => s.id === sId ? { ...s, status: s.status === 'active' ? 'suspended' : 'active' } : s) };
+          if (m.lines && lineId) {
+            return { ...m, lines: m.lines.map(l => {
+              if (l.id !== lineId) return l;
+              return { ...l, selections: l.selections.map(s => s.id === sId ? { ...s, status: s.status === 'active' ? 'suspended' : 'active' } : s) };
+            }) };
+          }
+          return { ...m, selections: (m.selections || []).map(s => s.id === sId ? { ...s, status: s.status === 'active' ? 'suspended' : 'active' } : s) };
         }));
       }, []);
 
-      // Settlement with 10-second countdown
+      // Settlement with 10-second countdown (flat markets)
       const startSettle = useCallback((mId, winnerId) => {
         setSettlingMap(prev => ({ ...prev, [mId]: { winnerId, startTime: Date.now() } }));
         settleTimers.current[mId] = setTimeout(() => {
-          // Actually settle
           setMarkets(prev => {
             setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: prev.find(m => m.id === mId)?.status, to: 'settled', source: 'Trader', note: `Settled: winner=${winnerId}` }] }));
-            return prev.map(m => m.id === mId ? { ...m, status: 'settled', settled: winnerId, selections: m.selections.map(s => ({ ...s, status: 'suspended' })) } : m);
+            return prev.map(m => m.id === mId ? { ...m, status: 'settled', settled: winnerId, selections: (m.selections || []).map(s => ({ ...s, status: 'suspended' })) } : m);
           });
           setSettlingMap(prev => { const n = { ...prev }; delete n[mId]; return n; });
           delete settleTimers.current[mId];
@@ -1422,11 +1757,39 @@
         setToast({ message: 'Settlement stopped', type: 'info' });
       }, []);
 
-      // Cancel with reason modal + 10-second countdown
+      // Line-level settlement
+      const startLineSettle = useCallback((mId, lineId, winnerId) => {
+        setLineSettlingMap(prev => ({ ...prev, [lineId]: { winnerId, startTime: Date.now() } }));
+        lineSettleTimers.current[lineId] = setTimeout(() => {
+          setMarkets(prev => {
+            setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: 'open', to: 'settled', source: 'Trader', note: `Line ${lineId} settled: winner=${winnerId}` }] }));
+            return prev.map(m => {
+              if (m.id !== mId || !m.lines) return m;
+              return { ...m, lines: m.lines.map(l => {
+                if (l.id !== lineId) return l;
+                return { ...l, status: 'settled', settled: winnerId, selections: l.selections.map(s => ({ ...s, status: 'suspended' })) };
+              }) };
+            });
+          });
+          setLineSettlingMap(prev => { const n = { ...prev }; delete n[lineId]; return n; });
+          delete lineSettleTimers.current[lineId];
+          setToast({ message: 'Line settled', type: 'success' });
+        }, 10000);
+      }, []);
+
+      const stopLineSettle = useCallback((mId, lineId) => {
+        if (lineSettleTimers.current[lineId]) {
+          clearTimeout(lineSettleTimers.current[lineId]);
+          delete lineSettleTimers.current[lineId];
+        }
+        setLineSettlingMap(prev => { const n = { ...prev }; delete n[lineId]; return n; });
+        setToast({ message: 'Line settlement stopped', type: 'info' });
+      }, []);
+
+      // Cancel with reason modal + 10-second countdown (flat)
       const startCancelFlow = useCallback((mId) => {
-        const market = markets.find(m => m.id === mId);
-        if (market) setModal({ type: 'cancel', marketId: mId });
-      }, [markets]);
+        setModal({ type: 'cancel', marketId: mId });
+      }, []);
 
       const confirmCancel = useCallback((mId, reason) => {
         setModal(null);
@@ -1434,7 +1797,7 @@
         cancelTimers.current[mId] = setTimeout(() => {
           setMarkets(prev => {
             setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: prev.find(m => m.id === mId)?.status, to: 'closed', source: 'Trader', note: `Cancelled: ${reason}` }] }));
-            return prev.map(m => m.id === mId ? { ...m, status: 'closed', selections: m.selections.map(s => ({ ...s, status: 'suspended' })) } : m);
+            return prev.map(m => m.id === mId ? { ...m, status: 'closed', selections: (m.selections || []).map(s => ({ ...s, status: 'suspended' })) } : m);
           });
           setCancellingMap(prev => { const n = { ...prev }; delete n[mId]; return n; });
           delete cancelTimers.current[mId];
@@ -1451,13 +1814,62 @@
         setToast({ message: 'Cancellation stopped', type: 'info' });
       }, []);
 
-      // Rollback
+      // Line-level cancel flow
+      const startLineCancelFlow = useCallback((mId, lineId) => {
+        setModal({ type: 'cancel', marketId: mId, lineId });
+      }, []);
+
+      const confirmLineCancel = useCallback((mId, lineId, reason) => {
+        setModal(null);
+        setLineCancellingMap(prev => ({ ...prev, [lineId]: { reason, startTime: Date.now() } }));
+        lineCancelTimers.current[lineId] = setTimeout(() => {
+          setMarkets(prev => {
+            setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: 'open', to: 'closed', source: 'Trader', note: `Line ${lineId} cancelled: ${reason}` }] }));
+            return prev.map(m => {
+              if (m.id !== mId || !m.lines) return m;
+              return { ...m, lines: m.lines.map(l => {
+                if (l.id !== lineId) return l;
+                return { ...l, status: 'closed', selections: l.selections.map(s => ({ ...s, status: 'suspended' })) };
+              }) };
+            });
+          });
+          setLineCancellingMap(prev => { const n = { ...prev }; delete n[lineId]; return n; });
+          delete lineCancelTimers.current[lineId];
+          setToast({ message: 'Line cancelled', type: 'error' });
+        }, 10000);
+      }, []);
+
+      const stopLineCancel = useCallback((mId, lineId) => {
+        if (lineCancelTimers.current[lineId]) {
+          clearTimeout(lineCancelTimers.current[lineId]);
+          delete lineCancelTimers.current[lineId];
+        }
+        setLineCancellingMap(prev => { const n = { ...prev }; delete n[lineId]; return n; });
+        setToast({ message: 'Line cancellation stopped', type: 'info' });
+      }, []);
+
+      // Rollback (flat)
       const rollback = useCallback(mId => {
         setMarkets(prev => {
           setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: prev.find(m => m.id === mId)?.status, to: 'open', source: 'Trader', note: 'Rolled back' }] }));
-          return prev.map(m => m.id === mId ? { ...m, status: 'open', settled: null, selections: m.selections.map(s => ({ ...s, status: 'active' })) } : m);
+          return prev.map(m => m.id === mId ? { ...m, status: 'open', settled: null, selections: (m.selections || []).map(s => ({ ...s, status: 'active' })) } : m);
         });
         setToast({ message: 'Rolled back to open', type: 'info' });
+      }, []);
+
+      // Rollback line
+      const rollbackLine = useCallback((mId, lineId) => {
+        setMarkets(prev => {
+          setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: 'settled', to: 'open', source: 'Trader', note: `Line ${lineId} rolled back` }] }));
+          return prev.map(m => {
+            if (m.id !== mId || !m.lines) return m;
+            return { ...m, lines: m.lines.map(l => {
+              if (l.id !== lineId) return l;
+              return { ...l, status: 'open', settled: null, selections: l.selections.map(s => ({ ...s, status: 'active' })) };
+            }) };
+          });
+        });
+        setToast({ message: 'Line rolled back to open', type: 'info' });
       }, []);
 
       const handleGroupAction = useCallback((groupKey, status) => {
@@ -1465,14 +1877,27 @@
           const now = new Date();
           setStatusHistory(h => {
             const next = { ...h };
-            prev.filter(m => m.group === groupKey && m.status !== 'settled').forEach(m => {
-              next[m.id] = [...(next[m.id] || []), { time: now, from: m.status, to: status, source: 'Trader', note: 'Group action' }];
+            prev.filter(m => m.group === groupKey).forEach(m => {
+              if (m.lines) {
+                if (!m.lines.every(l => l.status === 'settled')) {
+                  next[m.id] = [...(next[m.id] || []), { time: now, from: computeLineMarketStatus(m), to: status, source: 'Trader', note: 'Group action' }];
+                }
+              } else if (m.status !== 'settled') {
+                next[m.id] = [...(next[m.id] || []), { time: now, from: m.status, to: status, source: 'Trader', note: 'Group action' }];
+              }
             });
             return next;
           });
           return prev.map(m => {
-            if (m.group !== groupKey || m.status === 'settled') return m;
-            return { ...m, status, selections: m.selections.map(s => ({ ...s, status: status === 'open' ? 'active' : 'suspended' })) };
+            if (m.group !== groupKey) return m;
+            if (m.lines) {
+              return { ...m, status, lines: m.lines.map(l => {
+                if (l.status === 'settled') return l;
+                return { ...l, status, selections: l.selections.map(s => ({ ...s, status: status === 'open' ? 'active' : 'suspended' })) };
+              }) };
+            }
+            if (m.status === 'settled') return m;
+            return { ...m, status, selections: (m.selections || []).map(s => ({ ...s, status: status === 'open' ? 'active' : 'suspended' })) };
           });
         });
         setToast({ message: `Group ${status}`, type: status === 'open' ? 'success' : 'warning' });
@@ -1480,12 +1905,28 @@
       }, []);
 
       const openAll = useCallback(() => {
-        setMarkets(prev => prev.map(m => m.status === 'settled' ? m : { ...m, status: 'open', selections: m.selections.map(s => ({ ...s, status: 'active' })) }));
+        setMarkets(prev => prev.map(m => {
+          if (m.lines) {
+            return { ...m, status: 'open', lines: m.lines.map(l => {
+              if (l.status === 'settled') return l;
+              return { ...l, status: 'open', selections: l.selections.map(s => ({ ...s, status: 'active' })) };
+            }) };
+          }
+          return m.status === 'settled' ? m : { ...m, status: 'open', selections: (m.selections || []).map(s => ({ ...s, status: 'active' })) };
+        }));
         setToast({ message: 'All markets opened', type: 'success' });
       }, []);
 
       const suspendAll = useCallback(() => {
-        setMarkets(prev => prev.map(m => m.status === 'settled' ? m : { ...m, status: 'suspended', selections: m.selections.map(s => ({ ...s, status: 'suspended' })) }));
+        setMarkets(prev => prev.map(m => {
+          if (m.lines) {
+            return { ...m, status: 'suspended', lines: m.lines.map(l => {
+              if (l.status === 'settled') return l;
+              return { ...l, status: 'suspended', selections: l.selections.map(s => ({ ...s, status: 'suspended' })) };
+            }) };
+          }
+          return m.status === 'settled' ? m : { ...m, status: 'suspended', selections: (m.selections || []).map(s => ({ ...s, status: 'suspended' })) };
+        }));
         setToast({ message: 'All markets suspended', type: 'warning' });
       }, []);
 
@@ -1493,32 +1934,39 @@
         setToast({ message: `Action: ${action}`, type: 'info' });
       }, []);
 
-      // Filter markets
+      // Filter markets - search also matches line specifiers
       const filteredMarkets = useMemo(() => {
         let list = markets;
         if (activeTab !== 'all') list = list.filter(m => m.group === activeTab);
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
-          list = list.filter(m => m.name.toLowerCase().includes(q) || (m.specifier && m.specifier.includes(q)));
+          list = list.filter(m => {
+            if (m.name.toLowerCase().includes(q)) return true;
+            if (m.specifier && m.specifier.toLowerCase().includes(q)) return true;
+            if (m.lines && m.lines.some(l => l.specifier && l.specifier.toLowerCase().includes(q))) return true;
+            return false;
+          });
         }
         return list;
       }, [markets, activeTab, searchQuery]);
 
-      // 3-column layout: favorites to col 1, then shortest-column-first
+      // 3-column layout
       const columns = useMemo(() => {
         const cols = [[], [], []];
         const heights = [0, 0, 0];
 
         const estimateHeight = (m) => {
-          const n = m.selections.length;
-          const base = 38; // header
+          const base = 40; // header
           const mode = getMode(m.id);
+          if (m.lines) {
+            return base + m.lines.length * 36;
+          }
+          const n = (m.selections || []).length;
           if (mode === 'settle') return base + n * 32 + 30;
           const rows = n <= 3 ? 1 : Math.ceil(n / 3);
           return base + rows * 36 + 30;
         };
 
-        // Favorites first -> column 0
         const favs = filteredMarkets.filter(m => m.favorite);
         const rest = filteredMarkets.filter(m => !m.favorite);
 
@@ -1544,10 +1992,10 @@
         return c;
       }, [markets]);
 
-      const openCount = markets.filter(m => m.status === 'open').length;
-      const suspendedCount = markets.filter(m => m.status === 'suspended').length;
-      const settledCount = markets.filter(m => m.status === 'settled').length;
-      const closedCount = markets.filter(m => m.status === 'closed').length;
+      const openCount = markets.filter(m => m.lines ? computeLineMarketStatus(m) === 'open' : m.status === 'open').length;
+      const suspendedCount = markets.filter(m => m.lines ? computeLineMarketStatus(m) === 'suspended' : m.status === 'suspended').length;
+      const settledCount = markets.filter(m => m.lines ? computeLineMarketStatus(m) === 'settled' : m.status === 'settled').length;
+      const closedCount = markets.filter(m => m.lines ? computeLineMarketStatus(m) === 'closed' : m.status === 'closed').length;
 
       return (
         <>
@@ -1602,6 +2050,13 @@
                             onRollback={rollback}
                             settlingInfo={settlingMap[m.id] || null}
                             cancellingInfo={cancellingMap[m.id] || null}
+                            lineSettlingMap={lineSettlingMap}
+                            lineCancellingMap={lineCancellingMap}
+                            onStartLineSettle={startLineSettle}
+                            onStopLineSettle={stopLineSettle}
+                            onStartLineCancel={startLineCancelFlow}
+                            onStopLineCancel={stopLineCancel}
+                            onRollbackLine={rollbackLine}
                           />
                         ))}
                       </div>
@@ -1621,7 +2076,12 @@
             <OddsHistoryModal market={markets.find(m => m.id === modal.marketId)} oddsHistory={oddsHistory} onClose={() => setModal(null)} />
           )}
           {modal?.type === 'cancel' && (
-            <CancelModal market={markets.find(m => m.id === modal.marketId)} onConfirm={confirmCancel} onClose={() => setModal(null)} />
+            <CancelModal
+              market={markets.find(m => m.id === modal.marketId)}
+              lineId={modal.lineId || null}
+              onConfirm={confirmCancel}
+              onConfirmLine={confirmLineCancel}
+              onClose={() => setModal(null)} />
           )}
 
           {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}

@@ -1017,6 +1017,15 @@
       const isCancelling = !!cancellingInfo;
       const statusClass = isSettling ? 'market-card--settling' : isCancelling ? 'market-card--cancelling' : `market-card--${market.status}`;
 
+      // Reset settleSelection when market status changes (e.g. after rollback or settlement)
+      const prevStatus = useRef(market.status);
+      useEffect(() => {
+        if (prevStatus.current !== market.status) {
+          setSettleSelection(null);
+          prevStatus.current = market.status;
+        }
+      }, [market.status]);
+
       const handleSettleClick = (selId) => {
         if (market.status === 'settled' || market.status === 'closed') return;
         if (isSettling) return;

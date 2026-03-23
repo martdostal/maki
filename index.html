@@ -171,8 +171,22 @@
     .match-hero__teams { display: flex; align-items: center; gap: 14px; }
     .match-hero__team { text-align: center; min-width: 110px; }
     .match-hero__team-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-    .match-hero__team-stats { font-size: 10px; color: var(--text-muted); margin-top: 2px; display: flex; justify-content: center; gap: 8px; }
-    .match-hero__team-stats span { display: flex; align-items: center; gap: 2px; }
+    .match-hero__team-stats { margin-top: 5px; display: flex; justify-content: center; gap: 8px; }
+    .team-stat-badge {
+      display: flex; align-items: center; gap: 4px;
+      font-family: var(--font-mono); font-size: 13px; font-weight: 800;
+      color: var(--text-primary); padding: 2px 8px; border-radius: var(--radius-sm);
+      background: var(--bg-surface); border: 1px solid var(--border-primary);
+    }
+    .team-stat-badge__icon {
+      width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0;
+    }
+    .team-stat-badge__icon--yellow { background: #eab308; }
+    .team-stat-badge__icon--red { background: #ef4444; }
+    .team-stat-badge__icon--corner {
+      background: none; border: 2px solid var(--text-secondary);
+      border-radius: 1px; width: 12px; height: 12px;
+    }
     .match-hero__score-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .match-hero__score {
       font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: var(--text-primary);
@@ -958,9 +972,9 @@
             <div className="match-hero__team">
               <div className="match-hero__team-name">Manchester United</div>
               <div className="match-hero__team-stats">
-                <span>{'\uD83D\uDFE8'} 2</span>
-                <span>{'\uD83D\uDFE5'} 0</span>
-                <span>{'\u26F3'} 3</span>
+                <span className="team-stat-badge"><span className="team-stat-badge__icon team-stat-badge__icon--yellow"></span>2</span>
+                <span className="team-stat-badge"><span className="team-stat-badge__icon team-stat-badge__icon--red"></span>0</span>
+                <span className="team-stat-badge"><span className="team-stat-badge__icon team-stat-badge__icon--corner"></span>3</span>
               </div>
             </div>
             <div className="match-hero__score-block">
@@ -973,9 +987,9 @@
             <div className="match-hero__team">
               <div className="match-hero__team-name">Liverpool</div>
               <div className="match-hero__team-stats">
-                <span>{'\uD83D\uDFE8'} 1</span>
-                <span>{'\uD83D\uDFE5'} 0</span>
-                <span>{'\u26F3'} 4</span>
+                <span className="team-stat-badge"><span className="team-stat-badge__icon team-stat-badge__icon--yellow"></span>1</span>
+                <span className="team-stat-badge"><span className="team-stat-badge__icon team-stat-badge__icon--red"></span>0</span>
+                <span className="team-stat-badge"><span className="team-stat-badge__icon team-stat-badge__icon--corner"></span>4</span>
               </div>
             </div>
           </div>

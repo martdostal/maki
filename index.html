@@ -1132,15 +1132,32 @@
     // Line Monitor Row
     function LineMonitorRow({ line, onToggleSelection, marketId }) {
       const specClass = line.status === 'settled' ? 'line-specifier--settled' : line.status === 'closed' ? 'line-specifier--void' : '';
+      const sels = line.selections;
       return (
         <div className={`line-row ${line.status === 'settled' || line.status === 'closed' ? 'line-row--settled' : ''}`}>
-          <span className={`line-specifier ${specClass}`}>{line.specifier}</span>
-          <div className="line-sels">
-            {line.selections.map(s => (
-              <MonitorSelection key={s.id} s={s} marketSettled={line.settled}
-                onToggle={id => onToggleSelection(marketId, id, line.id)} />
-            ))}
-          </div>
+          {sels.length === 2 ? (
+            <>
+              <div className="line-sels">
+                <MonitorSelection s={sels[0]} marketSettled={line.settled}
+                  onToggle={id => onToggleSelection(marketId, id, line.id)} />
+              </div>
+              <span className={`line-specifier ${specClass}`}>{line.specifier}</span>
+              <div className="line-sels">
+                <MonitorSelection s={sels[1]} marketSettled={line.settled}
+                  onToggle={id => onToggleSelection(marketId, id, line.id)} />
+              </div>
+            </>
+          ) : (
+            <>
+              <span className={`line-specifier ${specClass}`}>{line.specifier}</span>
+              <div className="line-sels">
+                {sels.map(s => (
+                  <MonitorSelection key={s.id} s={s} marketSettled={line.settled}
+                    onToggle={id => onToggleSelection(marketId, id, line.id)} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       );
     }
@@ -1176,25 +1193,36 @@
       const specClass = line.status === 'settled' ? 'line-specifier--settled' : line.status === 'closed' ? 'line-specifier--void' : '';
       const rowClass = isSettling ? 'line-row--settling' : isCancelling ? 'line-row--cancelling' : (line.status === 'settled' || line.status === 'closed') ? 'line-row--settled' : '';
 
+      const sels = line.selections;
+      const renderSel = (s) => {
+        const selected = settleSelection === s.id;
+        const isWinner = line.settled === s.id;
+        return (
+          <div key={s.id}
+            className={`line-settle-sel ${selected ? 'line-settle-sel--selected' : ''} ${isWinner ? 'line-settle-sel--winner' : ''}`}
+            onClick={() => handleSettleClick(s.id)}>
+            <div className="line-settle-sel__radio">
+              {(selected || isWinner) && <div className="line-settle-sel__radio-dot"></div>}
+            </div>
+            <span className="line-settle-sel__name">{s.name}</span>
+          </div>
+        );
+      };
+
       return (
         <div className={`line-row ${rowClass}`}>
-          <span className={`line-specifier ${specClass}`}>{line.specifier}</span>
-          <div className="line-sels">
-            {line.selections.map(s => {
-              const selected = settleSelection === s.id;
-              const isWinner = line.settled === s.id;
-              return (
-                <div key={s.id}
-                  className={`line-settle-sel ${selected ? 'line-settle-sel--selected' : ''} ${isWinner ? 'line-settle-sel--winner' : ''}`}
-                  onClick={() => handleSettleClick(s.id)}>
-                  <div className="line-settle-sel__radio">
-                    {(selected || isWinner) && <div className="line-settle-sel__radio-dot"></div>}
-                  </div>
-                  <span className="line-settle-sel__name">{s.name}</span>
-                </div>
-              );
-            })}
-          </div>
+          {sels.length === 2 ? (
+            <>
+              <div className="line-sels">{renderSel(sels[0])}</div>
+              <span className={`line-specifier ${specClass}`}>{line.specifier}</span>
+              <div className="line-sels">{renderSel(sels[1])}</div>
+            </>
+          ) : (
+            <>
+              <span className={`line-specifier ${specClass}`}>{line.specifier}</span>
+              <div className="line-sels">{sels.map(renderSel)}</div>
+            </>
+          )}
           <div className="line-actions">
             {isSettling && (
               <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopLineSettle(marketId, line.id)}>Stop</button>

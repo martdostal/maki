@@ -451,6 +451,7 @@
       animation: progressShrink 10s linear forwards;
     }
     .countdown-bar--red { background: var(--red); }
+    .countdown-bar--purple { background: var(--purple); }
 
     /* Market controls */
     .mkt-controls {
@@ -519,6 +520,7 @@
     }
     .line-countdown--orange { background: var(--orange); }
     .line-countdown--red { background: var(--red); }
+    .line-countdown--purple { background: var(--purple); }
 
     .line-settle-sel {
       display: flex; align-items: center; padding: 3px 6px;
@@ -1163,11 +1165,12 @@
     }
 
     // Line Settle Row
-    function LineSettleRow({ line, marketId, lineSettlingInfo, lineCancellingInfo,
-      onStartLineSettle, onStopLineSettle, onStartLineCancel, onStopLineCancel, onRollbackLine }) {
+    function LineSettleRow({ line, marketId, lineSettlingInfo, lineCancellingInfo, lineRollingBackInfo,
+      onStartLineSettle, onStopLineSettle, onStartLineCancel, onStopLineCancel, onRollbackLine, onStopLineRollback }) {
       const [settleSelection, setSettleSelection] = useState(null);
       const isSettling = !!lineSettlingInfo;
       const isCancelling = !!lineCancellingInfo;
+      const isRollingBack = !!lineRollingBackInfo;
 
       const prevStatus = useRef(line.status);
       useEffect(() => {
@@ -1230,7 +1233,13 @@
             {isCancelling && (
               <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopLineCancel(marketId, line.id)}>Stop</button>
             )}
-            {!isSettling && !isCancelling && (
+            {isRollingBack && (
+              <>
+                <span style={{fontSize:8,color:'var(--purple)',fontWeight:600}}>Rolling back...</span>
+                <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopLineRollback(marketId, line.id)}>Stop</button>
+              </>
+            )}
+            {!isSettling && !isCancelling && !isRollingBack && (
               <>
                 {settleSelection && line.status !== 'settled' && (
                   <button className="mkt-ctrl mkt-ctrl--settle" onClick={confirmSettle}>Settle</button>
@@ -1250,6 +1259,9 @@
           {isCancelling && (
             <div className="line-countdown line-countdown--red" key={lineCancellingInfo.startTime} style={{position:'absolute',bottom:0,left:0,right:0}}></div>
           )}
+          {isRollingBack && (
+            <div className="line-countdown line-countdown--purple" key={lineRollingBackInfo.startTime} style={{position:'absolute',bottom:0,left:0,right:0}}></div>
+          )}
         </div>
       );
     }
@@ -1257,9 +1269,9 @@
     // Market Card
     function MarketCard({ market, mode, onSetMode, onToggleFavorite, onSetStatus, onToggleSelection,
       onShowHistory, onShowOddsHistory, onStartSettle, onStopSettle, onStartCancel, onStopCancel,
-      onRollback, settlingInfo, cancellingInfo,
-      lineSettlingMap, lineCancellingMap,
-      onStartLineSettle, onStopLineSettle, onStartLineCancel, onStopLineCancel, onRollbackLine }) {
+      onRollback, onStopRollback, settlingInfo, cancellingInfo, rollingBackInfo,
+      lineSettlingMap, lineCancellingMap, lineRollingBackMap,
+      onStartLineSettle, onStopLineSettle, onStartLineCancel, onStopLineCancel, onRollbackLine, onStopLineRollback }) {
       const [collapsed, setCollapsed] = useState(false);
       const [settleSelection, setSettleSelection] = useState(null);
       const isLineBased = !!market.lines;
@@ -1271,6 +1283,7 @@
 
       const isSettling = !!settlingInfo;
       const isCancelling = !!cancellingInfo;
+      const isRollingBack = !!rollingBackInfo;
 
       // Compute effective status for line-based markets
       let effectiveStatus = market.status;
@@ -1347,11 +1360,13 @@
                     <LineSettleRow key={line.id} line={line} marketId={market.id}
                       lineSettlingInfo={lineSettlingMap && lineSettlingMap[line.id]}
                       lineCancellingInfo={lineCancellingMap && lineCancellingMap[line.id]}
+                      lineRollingBackInfo={lineRollingBackMap && lineRollingBackMap[`${market.id}:${line.id}`]}
                       onStartLineSettle={onStartLineSettle}
                       onStopLineSettle={onStopLineSettle}
                       onStartLineCancel={onStartLineCancel}
                       onStopLineCancel={onStopLineCancel}
-                      onRollbackLine={onRollbackLine} />
+                      onRollbackLine={onRollbackLine}
+                      onStopLineRollback={onStopLineRollback} />
                   ))}
                 </div>
               )
@@ -1387,6 +1402,9 @@
             {!isLineBased && isCancelling && (
               <div className="countdown-bar countdown-bar--red" key={cancellingInfo.startTime}></div>
             )}
+            {!isLineBased && isRollingBack && (
+              <div className="countdown-bar countdown-bar--purple" key={rollingBackInfo.startTime}></div>
+            )}
 
             <div className="mkt-controls">
               {!isLineBased && isSettling && (
@@ -1395,7 +1413,13 @@
               {!isLineBased && isCancelling && (
                 <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopCancel(market.id)}>Stop</button>
               )}
-              {!isLineBased && !isSettling && !isCancelling && (
+              {!isLineBased && isRollingBack && (
+                <>
+                  <span style={{fontSize:10,color:'var(--purple)',fontWeight:600}}>Rolling back...</span>
+                  <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopRollback(market.id)}>Stop</button>
+                </>
+              )}
+              {!isLineBased && !isSettling && !isCancelling && !isRollingBack && (
                 <>
                   {market.status !== 'open' && market.status !== 'settled' && (
                     <button className="mkt-ctrl mkt-ctrl--open" onClick={() => onSetStatus(market.id, 'open')}>Open</button>
@@ -1504,6 +1528,35 @@
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      );
+    }
+
+    // Rollback Confirmation Modal
+    function RollbackModal({ market, lineId, onConfirm, onClose }) {
+      const lineName = lineId && market.lines ? market.lines.find(l => l.id === lineId)?.specifier : null;
+      const line = lineId && market.lines ? market.lines.find(l => l.id === lineId) : null;
+      const currentStatus = line ? line.status : market.status;
+      const title = lineName ? `Rollback: ${market.name} (${lineName})` : `Rollback: ${market.name}`;
+      return (
+        <div className="overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <div className="modal__title">{title}</div>
+              <button className="modal__close" onClick={onClose}>{'\u00D7'}</button>
+            </div>
+            <div style={{fontSize:12,color:'var(--text-secondary)',marginBottom:6}}>
+              This will rollback the market from <span className={`htable__badge htable__badge--${currentStatus}`} style={{fontSize:10}}>{currentStatus}</span> to <span className="htable__badge htable__badge--open" style={{fontSize:10}}>open</span>.
+            </div>
+            <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:12}}>A 10-second countdown will start. You can stop it before it completes.</div>
+            <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
+              <button className="btn btn--ghost btn--sm" onClick={onClose}>Cancel</button>
+              <button className="btn btn--sm" style={{background:'var(--purple)',color:'#fff',borderColor:'var(--purple)'}}
+                onClick={() => onConfirm(market.id, lineId)}>
+                Start Rollback (10s)
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -1721,6 +1774,7 @@
           Object.values(cancelTimers.current).forEach(clearTimeout);
           Object.values(lineSettleTimers.current).forEach(clearTimeout);
           Object.values(lineCancelTimers.current).forEach(clearTimeout);
+          Object.values(rollbackTimers.current).forEach(clearTimeout);
         };
       }, []);
 
@@ -1876,28 +1930,51 @@
         setToast({ message: 'Line cancellation stopped', type: 'info' });
       }, []);
 
-      // Rollback (flat)
-      const rollback = useCallback(mId => {
-        setMarkets(prev => {
-          setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: prev.find(m => m.id === mId)?.status, to: 'open', source: 'Trader', note: 'Rolled back' }] }));
-          return prev.map(m => m.id === mId ? { ...m, status: 'open', settled: null, selections: (m.selections || []).map(s => ({ ...s, status: 'active' })) } : m);
-        });
-        setToast({ message: 'Rolled back to open', type: 'info' });
+      // Rollback with confirmation modal + 10-sec countdown
+      const [rollingBackMap, setRollingBackMap] = useState({});
+      const rollbackTimers = useRef({});
+
+      const startRollbackFlow = useCallback((mId, lineId) => {
+        setModal({ type: 'rollback', marketId: mId, lineId: lineId || null });
       }, []);
 
-      // Rollback line
-      const rollbackLine = useCallback((mId, lineId) => {
-        setMarkets(prev => {
-          setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: 'settled', to: 'open', source: 'Trader', note: `Line ${lineId} rolled back` }] }));
-          return prev.map(m => {
-            if (m.id !== mId || !m.lines) return m;
-            return { ...m, lines: m.lines.map(l => {
-              if (l.id !== lineId) return l;
-              return { ...l, status: 'open', settled: null, selections: l.selections.map(s => ({ ...s, status: 'active' })) };
-            }) };
-          });
-        });
-        setToast({ message: 'Line rolled back to open', type: 'info' });
+      const confirmRollback = useCallback((mId, lineId) => {
+        setModal(null);
+        const key = lineId ? `${mId}:${lineId}` : mId;
+        setRollingBackMap(prev => ({ ...prev, [key]: { startTime: Date.now() } }));
+        rollbackTimers.current[key] = setTimeout(() => {
+          if (lineId) {
+            setMarkets(prev => {
+              setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: 'settled', to: 'open', source: 'Trader', note: `Line ${lineId} rolled back` }] }));
+              return prev.map(m => {
+                if (m.id !== mId || !m.lines) return m;
+                return { ...m, lines: m.lines.map(l => {
+                  if (l.id !== lineId) return l;
+                  return { ...l, status: 'open', settled: null, selections: l.selections.map(s => ({ ...s, status: 'active' })) };
+                }) };
+              });
+            });
+            setToast({ message: 'Line rolled back to open', type: 'info' });
+          } else {
+            setMarkets(prev => {
+              setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: prev.find(m => m.id === mId)?.status, to: 'open', source: 'Trader', note: 'Rolled back' }] }));
+              return prev.map(m => m.id === mId ? { ...m, status: 'open', settled: null, selections: (m.selections || []).map(s => ({ ...s, status: 'active' })) } : m);
+            });
+            setToast({ message: 'Rolled back to open', type: 'info' });
+          }
+          setRollingBackMap(prev => { const n = { ...prev }; delete n[key]; return n; });
+          delete rollbackTimers.current[key];
+        }, 10000);
+      }, []);
+
+      const stopRollback = useCallback((mId, lineId) => {
+        const key = lineId ? `${mId}:${lineId}` : mId;
+        if (rollbackTimers.current[key]) {
+          clearTimeout(rollbackTimers.current[key]);
+          delete rollbackTimers.current[key];
+        }
+        setRollingBackMap(prev => { const n = { ...prev }; delete n[key]; return n; });
+        setToast({ message: 'Rollback stopped', type: 'info' });
       }, []);
 
       const handleGroupAction = useCallback((groupKey, status) => {
@@ -2075,16 +2152,20 @@
                             onStopSettle={stopSettle}
                             onStartCancel={startCancelFlow}
                             onStopCancel={stopCancel}
-                            onRollback={rollback}
+                            onRollback={startRollbackFlow}
+                            onStopRollback={mId => stopRollback(mId)}
                             settlingInfo={settlingMap[m.id] || null}
                             cancellingInfo={cancellingMap[m.id] || null}
+                            rollingBackInfo={rollingBackMap[m.id] || null}
                             lineSettlingMap={lineSettlingMap}
                             lineCancellingMap={lineCancellingMap}
+                            lineRollingBackMap={rollingBackMap}
                             onStartLineSettle={startLineSettle}
                             onStopLineSettle={stopLineSettle}
                             onStartLineCancel={startLineCancelFlow}
                             onStopLineCancel={stopLineCancel}
-                            onRollbackLine={rollbackLine}
+                            onRollbackLine={(mId, lineId) => startRollbackFlow(mId, lineId)}
+                            onStopLineRollback={(mId, lineId) => stopRollback(mId, lineId)}
                           />
                         ))}
                       </div>
@@ -2109,6 +2190,13 @@
               lineId={modal.lineId || null}
               onConfirm={confirmCancel}
               onConfirmLine={confirmLineCancel}
+              onClose={() => setModal(null)} />
+          )}
+          {modal?.type === 'rollback' && (
+            <RollbackModal
+              market={markets.find(m => m.id === modal.marketId)}
+              lineId={modal.lineId || null}
+              onConfirm={confirmRollback}
               onClose={() => setModal(null)} />
           )}
 

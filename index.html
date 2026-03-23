@@ -188,18 +188,17 @@
       border: none;
     }
     .team-stat-badge__icon--corner::before {
-      content: ''; position: absolute; top: 0; left: 0;
-      width: 10px; height: 10px;
-      border-top: 2.5px solid var(--text-primary);
-      border-left: 2.5px solid var(--text-primary);
-      border-radius: 2px 0 0 0;
+      content: ''; position: absolute; bottom: 0; left: 3px;
+      width: 2.5px; height: 12px;
+      background: var(--text-primary);
+      border-radius: 1px;
     }
     .team-stat-badge__icon--corner::after {
-      content: ''; position: absolute; top: 2px; left: 2px;
-      width: 6px; height: 6px;
-      border-top: 1.5px dashed rgba(255,255,255,0.3);
-      border-left: 1.5px dashed rgba(255,255,255,0.3);
-      border-radius: 50% 0 0 0;
+      content: ''; position: absolute; top: 0; left: 3px;
+      width: 0; height: 0;
+      border-left: 5px solid var(--orange);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
     }
     .match-hero__score-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .match-hero__score {

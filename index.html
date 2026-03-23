@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maki - Sports Trading &amp; Settlement Platform</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0c10;
+      --bg-secondary: #12141a;
+      --bg-card: #181b23;
+      --bg-card-hover: #1e2130;
+      --bg-surface: #1e212b;
+      --bg-input: #111318;
+      --bg-elevated: #222533;
+      --border-primary: #262937;
+      --border-subtle: #1e2130;
+      --border-focus: #4a5068;
+      --text-primary: #e8eaef;
+      --text-secondary: #9aa0b0;
+      --text-muted: #5a6070;
+      --green: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.10);
+      --green-border: rgba(34, 197, 94, 0.22);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.10);
+      --red-border: rgba(239, 68, 68, 0.22);
+      --orange: #f59e0b;
+      --orange-bg: rgba(245, 158, 11, 0.10);
+      --orange-border: rgba(245, 158, 11, 0.22);
+      --blue: #3b82f6;
+      --blue-bg: rgba(59, 130, 246, 0.10);
+      --blue-border: rgba(59, 130, 246, 0.22);
+      --purple: #8b5cf6;
+      --purple-bg: rgba(139, 92, 246, 0.10);
+      --purple-border: rgba(139, 92, 246, 0.22);
+      --cyan: #06b6d4;
+      --settled: #10b981;
+      --settled-bg: rgba(16, 185, 129, 0.10);
+      --settled-border: rgba(16, 185, 129, 0.22);
+      --void: #6b7280;
+      --void-bg: rgba(107, 114, 128, 0.10);
+      --void-border: rgba(107, 114, 128, 0.22);
+      --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --radius-xs: 3px;
+      --radius-sm: 5px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 13px;
+      line-height: 1.4;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    #root { height: 100vh; display: flex; flex-direction: column; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2a2d38; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3d48; }
+
+    @keyframes flashGreen {
+      0% { background-color: rgba(34, 197, 94, 0.25); }
+      100% { background-color: transparent; }
+    }
+    @keyframes flashRed {
+      0% { background-color: rgba(239, 68, 68, 0.25); }
+      100% { background-color: transparent; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes countdownPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+    }
+    @keyframes countdownPulseRed {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    }
+    @keyframes progressShrink {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+    .flash-green { animation: flashGreen 0.6s ease-out; }
+    .flash-red { animation: flashRed 0.6s ease-out; }
+
+    /* ===== TOP BAR ===== */
+    .top-bar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-primary);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      height: 44px;
+      flex-shrink: 0;
+      gap: 14px;
+    }
+    .top-bar__logo {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--blue);
+    }
+    .top-bar__sep { width: 1px; height: 22px; background: var(--border-primary); }
+    .top-bar__match-id {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-input);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+    .top-bar__sport { font-size: 12px; color: var(--text-secondary); }
+    .top-bar__date { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+    .top-bar__actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+    .top-bar__kbd { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-muted); }
+    .kbd {
+      font-family: var(--font-mono); font-size: 10px; padding: 1px 5px;
+      background: var(--bg-input); border: 1px solid var(--border-primary); border-radius: 3px; color: var(--text-muted);
+    }
+
+    /* Mode Toggle in top bar */
+    .global-mode-toggle {
+      display: flex; align-items: center; gap: 4px; background: var(--bg-input);
+      border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: 2px;
+    }
+    .global-mode-btn {
+      font-family: var(--font-sans); font-size: 10px; font-weight: 600; padding: 3px 10px;
+      border: none; background: transparent; color: var(--text-muted); cursor: pointer;
+      border-radius: var(--radius-xs); transition: all 0.12s; display: flex; align-items: center; gap: 4px;
+    }
+    .global-mode-btn:hover { color: var(--text-secondary); }
+    .global-mode-btn--active { background: var(--blue-bg); color: var(--blue); }
+
+    /* ===== MATCH HERO ===== */
+    .match-hero {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-primary);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-shrink: 0;
+    }
+    .match-hero__teams { display: flex; align-items: center; gap: 14px; }
+    .match-hero__team { text-align: center; min-width: 110px; }
+    .match-hero__team-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .match-hero__team-stats { font-size: 10px; color: var(--text-muted); margin-top: 2px; display: flex; justify-content: center; gap: 8px; }
+    .match-hero__team-stats span { display: flex; align-items: center; gap: 2px; }
+    .match-hero__score-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .match-hero__score {
+      font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: var(--text-primary);
+      letter-spacing: 4px; background: var(--bg-surface); padding: 3px 14px;
+      border-radius: var(--radius-md); border: 1px solid var(--border-primary);
+    }
+    .match-hero__live-badge {
+      display: flex; align-items: center; gap: 5px; font-size: 11px;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--green);
+    }
+    .match-hero__live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+    .match-hero__divider { width: 1px; height: 44px; background: var(--border-primary); }
+    .match-hero__info { display: flex; gap: 20px; }
+    .match-hero__stat { display: flex; flex-direction: column; gap: 1px; }
+    .match-hero__stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .match-hero__stat-value { font-family: var(--font-mono); font-size: 14px; font-weight: 700; }
+    .match-hero__global-actions { margin-left: auto; display: flex; gap: 6px; }
+    .btn {
+      font-family: var(--font-sans); font-size: 11px; font-weight: 600; padding: 6px 14px;
+      border-radius: var(--radius-sm); cursor: pointer; transition: all 0.12s;
+      border: 1px solid transparent; display: flex; align-items: center; gap: 5px;
+    }
+    .btn--open { background: var(--green); color: #000; border-color: var(--green); }
+    .btn--open:hover { filter: brightness(1.1); }
+    .btn--suspend { background: var(--orange); color: #000; border-color: var(--orange); }
+    .btn--suspend:hover { filter: brightness(1.1); }
+    .btn--danger { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+    .btn--danger:hover { background: rgba(239,68,68,0.18); }
+    .btn--ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-primary); }
+    .btn--ghost:hover { background: var(--bg-surface); border-color: var(--border-focus); }
+    .btn--sm { font-size: 11px; padding: 4px 10px; }
+    .btn--xs { font-size: 10px; padding: 3px 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+
+    /* ===== MAIN LAYOUT ===== */
+    .main-layout { flex: 1; display: flex; overflow: hidden; }
+
+    /* ===== LEFT PANEL ===== */
+    .left-panel {
+      width: 256px; flex-shrink: 0; background: var(--bg-secondary);
+      border-right: 1px solid var(--border-primary); display: flex;
+      flex-direction: column; overflow-y: auto;
+    }
+    .left-panel::-webkit-scrollbar { width: 4px; }
+    .panel-section { padding: 14px; border-bottom: 1px solid var(--border-primary); }
+    .panel-section__title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px;
+    }
+
+    /* Timeline */
+    .timeline { display: flex; flex-direction: column; gap: 2px; }
+    .timeline-item {
+      display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+      border-radius: var(--radius-sm); cursor: pointer; transition: background 0.12s;
+    }
+    .timeline-item:hover { background: var(--bg-surface); }
+    .timeline-item--active { background: var(--bg-surface); }
+    .timeline-item__indicator {
+      width: 26px; height: 26px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0;
+    }
+    .timeline-item__indicator--completed { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green-border); }
+    .timeline-item__indicator--active { background: var(--blue-bg); color: var(--blue); border: 1.5px solid var(--blue-border); }
+    .timeline-item__indicator--pending { background: var(--bg-input); color: var(--text-muted); border: 1.5px solid var(--border-primary); }
+    .timeline-item__content { flex: 1; min-width: 0; }
+    .timeline-item__name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .timeline-item__status { font-size: 10px; color: var(--text-muted); }
+    .timeline-item__status--live { color: var(--green); font-weight: 600; }
+    .timeline-item__score { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--text-secondary); }
+    .timeline-connector { width: 1px; height: 6px; background: var(--border-primary); margin-left: 20px; }
+
+    /* Flow Actions */
+    .flow-actions { display: flex; flex-direction: column; gap: 5px; }
+    .flow-btn {
+      font-family: var(--font-sans); width: 100%; padding: 7px 10px; font-size: 11px;
+      font-weight: 600; border-radius: var(--radius-sm); cursor: pointer;
+      transition: all 0.12s; text-align: left; display: flex; align-items: center; gap: 6px;
+    }
+    .flow-btn--primary { background: var(--blue); color: #fff; border: none; }
+    .flow-btn--primary:hover { filter: brightness(1.1); }
+    .flow-btn--secondary { background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border-primary); }
+    .flow-btn--secondary:hover { background: var(--bg-elevated); }
+    .flow-btn--danger { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+    .flow-btn--danger:hover { background: rgba(239,68,68,0.18); }
+    .flow-btn__icon { font-size: 12px; width: 16px; text-align: center; }
+
+    /* Quick Stats */
+    .quick-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .quick-stat {
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm); padding: 6px 8px;
+    }
+    .quick-stat__label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+    .quick-stat__value { font-family: var(--font-mono); font-size: 13px; font-weight: 700; margin-top: 1px; }
+
+    /* ===== CENTER PANEL ===== */
+    .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+    /* Market Tabs */
+    .market-tabs {
+      display: flex; align-items: center; gap: 2px; padding: 6px 14px;
+      background: var(--bg-secondary); border-bottom: 1px solid var(--border-primary);
+      flex-shrink: 0; overflow-x: auto;
+    }
+    .market-tab {
+      font-family: var(--font-sans); font-size: 11px; font-weight: 500; padding: 5px 12px;
+      border: none; background: transparent; color: var(--text-muted); cursor: pointer;
+      border-radius: var(--radius-sm); transition: all 0.12s; white-space: nowrap;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .market-tab:hover { color: var(--text-secondary); background: var(--bg-surface); }
+    .market-tab--active { background: var(--bg-surface); color: var(--text-primary); font-weight: 600; }
+    .market-tab__count {
+      font-size: 9px; font-family: var(--font-mono); background: var(--bg-input);
+      padding: 1px 5px; border-radius: 7px; color: var(--text-muted);
+    }
+    .market-tab--active .market-tab__count { background: var(--blue-bg); color: var(--blue); }
+    .market-tabs__spacer { flex: 1; }
+    .market-tabs__summary { display: flex; gap: 10px; font-size: 10px; color: var(--text-muted); align-items: center; }
+    .market-tabs__summary-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+
+    /* Search */
+    .market-search {
+      display: flex; align-items: center; gap: 5px; padding: 4px 8px;
+      background: var(--bg-input); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-sm); margin-right: 8px;
+    }
+    .market-search__icon { color: var(--text-muted); font-size: 11px; }
+    .market-search__input {
+      background: none; border: none; color: var(--text-primary);
+      font-family: var(--font-sans); font-size: 11px; outline: none; width: 120px;
+    }
+    .market-search__input::placeholder { color: var(--text-muted); }
+
+    /* Market Grid - 3 columns */
+    .market-grid-container { flex: 1; overflow-y: auto; padding: 10px 14px; }
+    .market-grid-container::-webkit-scrollbar { width: 5px; }
+    .market-grid { display: flex; gap: 10px; align-items: flex-start; }
+    .market-column { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+    /* ===== MARKET CARD ===== */
+    .market-card {
+      background: var(--bg-card); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); overflow: hidden; transition: border-color 0.12s;
+    }
+    .market-card:hover { border-color: var(--border-primary); }
+    .market-card--open { border-left: 3px solid var(--green); }
+    .market-card--suspended { border-left: 3px solid var(--orange); }
+    .market-card--closed { border-left: 3px solid var(--red); opacity: 0.7; }
+    .market-card--settled { border-left: 3px solid var(--settled); }
+    .market-card--void { border-left: 3px solid var(--void); }
+    .market-card--settling { animation: countdownPulse 1s infinite; border-left-color: var(--orange); }
+    .market-card--cancelling { animation: countdownPulseRed 1s infinite; border-left-color: var(--red); }
+
+    .market-card__header {
+      display: flex; align-items: center; gap: 6px; padding: 7px 10px;
+      cursor: pointer; user-select: none;
+    }
+    .market-card__star {
+      background: none; border: none; cursor: pointer; font-size: 12px;
+      color: var(--text-muted); padding: 0; line-height: 1; transition: all 0.12s;
+    }
+    .market-card__star:hover { color: var(--orange); transform: scale(1.15); }
+    .market-card__star--active { color: var(--orange); }
+    .market-card__name {
+      font-size: 12px; font-weight: 600; flex: 1; min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .market-card__specifier {
+      font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
+      background: var(--bg-input); padding: 1px 5px; border-radius: var(--radius-xs); margin-left: 3px;
+    }
+    .market-card__badge {
+      font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+      padding: 2px 6px; border-radius: 8px;
+    }
+    .market-card__badge--open { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .market-card__badge--suspended { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-border); }
+    .market-card__badge--closed { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+    .market-card__badge--settled { background: var(--settled-bg); color: var(--settled); border: 1px solid var(--settled-border); }
+    .market-card__badge--void { background: var(--void-bg); color: var(--void); border: 1px solid var(--void-border); }
+
+    .market-card__mode-toggle {
+      display: flex; gap: 2px; margin-left: 4px;
+    }
+    .market-card__mode-btn {
+      background: none; border: 1px solid var(--border-subtle); color: var(--text-muted);
+      cursor: pointer; font-size: 11px; padding: 2px 5px; border-radius: var(--radius-xs);
+      transition: all 0.12s; line-height: 1;
+    }
+    .market-card__mode-btn:hover { color: var(--text-secondary); border-color: var(--border-primary); }
+    .market-card__mode-btn--active { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
+
+    .market-card__chevron {
+      color: var(--text-muted); font-size: 10px; transition: transform 0.15s;
+    }
+    .market-card__chevron--collapsed { transform: rotate(-90deg); }
+
+    .market-card__body { padding: 0 10px 8px; }
+    .market-card__body--hidden { display: none; }
+
+    /* ===== MONITOR MODE SELECTIONS ===== */
+    .sel-grid { display: grid; gap: 4px; }
+    .sel-grid--2 { grid-template-columns: 1fr 1fr; }
+    .sel-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+    .sel-grid--list { grid-template-columns: 1fr; }
+    .sel-grid--many { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+
+    .sel {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm); cursor: pointer; transition: all 0.12s;
+      gap: 6px; min-width: 0; position: relative;
+    }
+    .sel:hover { background: var(--bg-elevated); border-color: var(--border-primary); }
+    .sel--suspended { background: var(--orange-bg); border-color: var(--orange-border); }
+    .sel--suspended .sel__name, .sel--suspended .sel__odds, .sel--suspended .sel__liability { opacity: 0.35; }
+    .sel--winner { background: var(--green-bg); border-color: var(--green-border); }
+    .sel--winner .sel__name { color: var(--green); font-weight: 700; }
+    .sel__suspended-tag {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--orange); background: rgba(245,158,11,0.2);
+      padding: 1px 6px; border-radius: 6px; pointer-events: none; z-index: 2;
+    }
+    .sel__winner-tag {
+      font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      color: var(--green); background: var(--green-bg); padding: 1px 5px; border-radius: 5px;
+    }
+    .sel__name {
+      font-size: 11px; color: var(--text-secondary); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;
+    }
+    .sel__right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .sel__arrow { font-size: 8px; width: 10px; text-align: center; }
+    .sel__arrow--up { color: var(--green); }
+    .sel__arrow--down { color: var(--red); }
+    .sel__odds {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+      color: var(--text-primary); min-width: 34px; text-align: right;
+    }
+    .sel__liability {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
+      min-width: 36px; text-align: right;
+    }
+
+    /* ===== SETTLE MODE SELECTIONS ===== */
+    .settle-sel {
+      display: flex; align-items: center; padding: 7px 10px;
+      background: var(--bg-surface); border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-sm); cursor: pointer; transition: all 0.12s; gap: 8px;
+    }
+    .settle-sel:hover { border-color: var(--border-focus); background: var(--bg-elevated); }
+    .settle-sel--selected { border-color: var(--green); background: var(--green-bg); }
+    .settle-sel--winner { border-color: var(--settled); background: var(--settled-bg); }
+    .settle-sel__radio {
+      width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-primary);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .settle-sel--selected .settle-sel__radio { border-color: var(--green); }
+    .settle-sel--winner .settle-sel__radio { border-color: var(--settled); }
+    .settle-sel__radio-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .settle-sel--selected .settle-sel__radio-dot { background: var(--green); }
+    .settle-sel--winner .settle-sel__radio-dot { background: var(--settled); }
+    .settle-sel__name { font-size: 12px; font-weight: 600; flex: 1; }
+    .settle-sel__specifier {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);
+      background: var(--bg-input); padding: 1px 6px; border-radius: var(--radius-xs);
+    }
+
+    /* Countdown bar */
+    .countdown-bar {
+      height: 3px; background: var(--orange); border-radius: 2px; margin-top: 6px;
+      animation: progressShrink 10s linear forwards;
+    }
+    .countdown-bar--red { background: var(--red); }
+
+    /* Market controls */
+    .mkt-controls {
+      display: flex; align-items: center; gap: 3px; margin-top: 6px;
+      padding-top: 5px; border-top: 1px solid var(--border-subtle); flex-wrap: wrap;
+    }
+    .mkt-ctrl {
+      font-family: var(--font-sans); font-size: 9px; font-weight: 600;
+      padding: 2px 6px; border-radius: var(--radius-xs); cursor: pointer;
+      transition: all 0.12s; text-transform: uppercase; letter-spacing: 0.3px;
+      border: 1px solid var(--border-primary); background: var(--bg-input); color: var(--text-muted);
+    }
+    .mkt-ctrl:hover { color: var(--text-primary); border-color: var(--border-focus); }
+    .mkt-ctrl--open { color: var(--green); border-color: var(--green-border); }
+    .mkt-ctrl--open:hover { background: var(--green-bg); }
+    .mkt-ctrl--suspend { color: var(--orange); border-color: var(--orange-border); }
+    .mkt-ctrl--suspend:hover { background: var(--orange-bg); }
+    .mkt-ctrl--close { color: var(--red); border-color: var(--red-border); }
+    .mkt-ctrl--close:hover { background: var(--red-bg); }
+    .mkt-ctrl--settle { color: var(--settled); border-color: var(--settled-border); }
+    .mkt-ctrl--settle:hover { background: var(--settled-bg); }
+    .mkt-ctrl--rollback { color: var(--purple); border-color: var(--purple-border); }
+    .mkt-ctrl--rollback:hover { background: var(--purple-bg); }
+    .mkt-ctrl--history { color: var(--blue); border-color: var(--blue-border); }
+    .mkt-ctrl--history:hover { background: var(--blue-bg); }
+    .mkt-ctrl--stop { color: var(--text-primary); border-color: var(--text-muted); background: var(--bg-elevated); }
+    .mkt-controls__spacer { flex: 1; }
+    .mkt-controls__stats {
+      display: flex; gap: 8px; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
+    }
+    .mkt-controls__stats span { color: var(--text-secondary); font-weight: 600; }
+
+    /* ===== MODALS / OVERLAYS ===== */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; animation: fadeIn 0.12s;
+    }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg); padding: 18px;
+      min-width: min(440px, 92vw); max-width: min(560px, 95vw);
+      max-height: 80vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: slideIn 0.18s;
+    }
+    .modal__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .modal__title { font-size: 14px; font-weight: 700; }
+    .modal__close {
+      background: none; border: 1px solid var(--border-primary); color: var(--text-muted);
+      cursor: pointer; font-size: 14px; padding: 2px 7px; border-radius: var(--radius-xs); line-height: 1;
+    }
+    .modal__close:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
+    /* Cancel textarea */
+    .cancel-textarea {
+      width: 100%; min-height: 70px; background: var(--bg-input);
+      border: 1px solid var(--border-primary); border-radius: var(--radius-sm);
+      color: var(--text-primary); font-family: var(--font-sans); font-size: 12px;
+      padding: 8px; resize: vertical; margin-bottom: 10px; outline: none;
+    }
+    .cancel-textarea:focus { border-color: var(--blue); }
+
+    /* Group popup items */
+    .group-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm); margin-bottom: 4px;
+    }
+    .group-item__name { font-size: 12px; font-weight: 600; }
+    .group-item__count { font-size: 10px; color: var(--text-muted); margin-left: 6px; }
+    .group-item__actions { display: flex; gap: 4px; }
+
+    /* Odds history tabs */
+    .odds-tabs { display: flex; gap: 3px; margin-bottom: 10px; flex-wrap: wrap; }
+    .odds-tab {
+      font-family: var(--font-sans); font-size: 10px; padding: 3px 8px;
+      border: 1px solid var(--border-primary); border-radius: var(--radius-xs);
+      background: var(--bg-input); color: var(--text-muted); cursor: pointer; transition: all 0.12s;
+    }
+    .odds-tab:hover { color: var(--text-secondary); border-color: var(--border-focus); }
+    .odds-tab--active { background: var(--purple-bg); color: var(--purple); border-color: var(--purple-border); }
+
+    /* History table */
+    .htable { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .htable th {
+      text-align: left; padding: 5px 6px; font-size: 9px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted);
+      border-bottom: 1px solid var(--border-primary);
+    }
+    .htable td { padding: 5px 6px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+    .htable tr:hover td { background: var(--bg-surface); }
+    .htable__time { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+    .htable__badge {
+      display: inline-block; font-size: 8px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.2px; padding: 1px 5px; border-radius: 6px;
+    }
+    .htable__badge--open { background: var(--green-bg); color: var(--green); }
+    .htable__badge--suspended { background: var(--orange-bg); color: var(--orange); }
+    .htable__badge--closed { background: var(--red-bg); color: var(--red); }
+    .htable__badge--settled { background: var(--settled-bg); color: var(--settled); }
+    .htable__badge--void { background: var(--void-bg); color: var(--void); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 16px; right: 16px; background: var(--bg-card);
+      border: 1px solid var(--border-primary); border-radius: var(--radius-md);
+      padding: 8px 14px; font-size: 12px; box-shadow: var(--shadow-lg);
+      animation: slideIn 0.18s; z-index: 999; display: flex; align-items: center; gap: 6px;
+    }
+    .toast--success { border-color: var(--green-border); color: var(--green); }
+    .toast--warning { border-color: var(--orange-border); color: var(--orange); }
+    .toast--error { border-color: var(--red-border); color: var(--red); }
+    .toast--info { border-color: var(--blue-border); color: var(--blue); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+    // ===== DATA =====
+    const MARKET_GROUPS = {
+      all: { name: 'All Markets' },
+      main: { name: 'Main' },
+      goals: { name: 'Goals' },
+      halves: { name: 'Halves' },
+      corners: { name: 'Corners' },
+      cards: { name: 'Cards' },
+      handicap: { name: 'Handicap' },
+      specials: { name: 'Specials' },
+      correct_score: { name: 'Correct Score' },
+      player: { name: 'Player' },
+    };
+
+    const GROUP_KEYS = Object.keys(MARKET_GROUPS).filter(k => k !== 'all');
+
+    const sel = (id, name, odds, liability) => ({
+      id, name, odds, prevOdds: odds, status: 'active', liability, direction: null
+    });
+    const susSel = (id, name, odds, liability) => ({
+      id, name, odds, prevOdds: odds, status: 'suspended', liability, direction: null
+    });
+
+    const initialMarkets = [
+      // === MAIN ===
+      { id: 'match-winner', name: 'Match Winner', group: 'main', status: 'open', settled: null, favorite: true, liability: 12450, volume: 34200, selections: [
+        sel('mw-1', 'Manchester United', 2.35, 5200), sel('mw-x', 'Draw', 3.25, 3100), sel('mw-2', 'Liverpool', 2.85, 4150)] },
+      { id: 'double-chance', name: 'Double Chance', group: 'main', status: 'open', settled: null, favorite: false, liability: 5320, volume: 12800, selections: [
+        sel('dc-1x', '1X', 1.35, 2100), sel('dc-12', '12', 1.28, 1620), sel('dc-x2', 'X2', 1.52, 1600)] },
+      { id: 'draw-no-bet', name: 'Draw No Bet', group: 'main', status: 'open', settled: null, favorite: false, liability: 7800, volume: 19500, selections: [
+        sel('dnb-1', 'Manchester United', 1.72, 4200), sel('dnb-2', 'Liverpool', 2.10, 3600)] },
+      // === GOALS ===
+      { id: 'total-goals-1.5', name: 'Total Goals', specifier: '1.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 14200, volume: 36800, selections: [
+        sel('tg15-o', 'Over 1.5', 1.32, 8400), sel('tg15-u', 'Under 1.5', 3.40, 5800)] },
+      { id: 'total-goals-2.5', name: 'Total Goals', specifier: '2.5', group: 'goals', status: 'open', settled: null, favorite: true, liability: 18700, volume: 45600, selections: [
+        sel('tg25-o', 'Over 2.5', 1.88, 10200), sel('tg25-u', 'Under 2.5', 1.92, 8500)] },
+      { id: 'total-goals-3.5', name: 'Total Goals', specifier: '3.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 8200, volume: 21300, selections: [
+        sel('tg35-o', 'Over 3.5', 2.75, 4800), sel('tg35-u', 'Under 3.5', 1.45, 3400)] },
+      { id: 'total-goals-4.5', name: 'Total Goals', specifier: '4.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 4100, volume: 10500, selections: [
+        sel('tg45-o', 'Over 4.5', 4.80, 1800), sel('tg45-u', 'Under 4.5', 1.18, 2300)] },
+      { id: 'total-goals-5.5', name: 'Total Goals', specifier: '5.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 1900, volume: 4800, selections: [
+        sel('tg55-o', 'Over 5.5', 8.50, 600), sel('tg55-u', 'Under 5.5', 1.06, 1300)] },
+      { id: 'btts', name: 'Both Teams To Score', group: 'goals', status: 'open', settled: null, favorite: false, liability: 9600, volume: 28400, selections: [
+        sel('btts-y', 'Yes', 1.72, 5600), sel('btts-n', 'No', 2.15, 4000)] },
+      { id: 'btts-ht', name: 'BTTS 1st Half', group: 'goals', status: 'open', settled: null, favorite: false, liability: 3200, volume: 8100, selections: [
+        sel('bttsht-y', 'Yes', 3.80, 1400), sel('bttsht-n', 'No', 1.25, 1800)] },
+      { id: 'exact-goals', name: 'Exact Goals', group: 'goals', status: 'open', settled: null, favorite: false, liability: 4200, volume: 9800, selections: [
+        sel('eg-0', '0 Goals', 8.50, 420), sel('eg-1', '1 Goal', 4.20, 880), sel('eg-2', '2 Goals', 3.40, 1200),
+        sel('eg-3', '3 Goals', 3.80, 960), sel('eg-4', '4 Goals', 5.50, 480), sel('eg-5+', '5+ Goals', 9.00, 260)] },
+      { id: 'exact-goals-ht', name: 'Exact Goals 1st Half', group: 'goals', status: 'open', settled: null, favorite: false, liability: 2800, volume: 6400, selections: [
+        sel('eght-0', '0 Goals', 3.20, 800), sel('eght-1', '1 Goal', 2.50, 1100), sel('eght-2', '2 Goals', 3.80, 580), sel('eght-3+', '3+ Goals', 6.50, 320)] },
+      { id: 'home-exact-goals', name: 'Home Exact Goals', group: 'goals', status: 'open', settled: null, favorite: false, liability: 2100, volume: 5100, selections: [
+        sel('heg-0', '0 Goals', 3.40, 520), sel('heg-1', '1 Goal', 2.60, 780), sel('heg-2', '2 Goals', 3.50, 500), sel('heg-3+', '3+ Goals', 5.00, 300)] },
+      { id: 'away-exact-goals', name: 'Away Exact Goals', group: 'goals', status: 'open', settled: null, favorite: false, liability: 1900, volume: 4600, selections: [
+        sel('aeg-0', '0 Goals', 3.10, 540), sel('aeg-1', '1 Goal', 2.70, 700), sel('aeg-2', '2 Goals', 3.80, 420), sel('aeg-3+', '3+ Goals', 5.50, 240)] },
+      { id: 'home-total-goals-1.5', name: 'Home Total Goals', specifier: '1.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 5400, volume: 13200, selections: [
+        sel('htg15-o', 'Over 1.5', 2.10, 3000), sel('htg15-u', 'Under 1.5', 1.72, 2400)] },
+      { id: 'away-total-goals-1.5', name: 'Away Total Goals', specifier: '1.5', group: 'goals', status: 'open', settled: null, favorite: false, liability: 4800, volume: 11800, selections: [
+        sel('atg15-o', 'Over 1.5', 2.30, 2500), sel('atg15-u', 'Under 1.5', 1.62, 2300)] },
+      { id: 'odd-even-goals', name: 'Odd/Even Goals', group: 'goals', status: 'open', settled: null, favorite: false, liability: 3600, volume: 8900, selections: [
+        sel('oe-odd', 'Odd', 1.90, 1900), sel('oe-even', 'Even', 1.90, 1700)] },
+      { id: 'first-goal', name: 'First Goal', group: 'goals', status: 'open', settled: null, favorite: false, liability: 6200, volume: 15400, selections: [
+        sel('fg-1', 'Man Utd', 2.10, 2800), sel('fg-2', 'Liverpool', 2.30, 2200), sel('fg-none', 'No Goal', 8.50, 1200)] },
+      { id: 'last-goal', name: 'Last Goal', group: 'goals', status: 'open', settled: null, favorite: false, liability: 3800, volume: 9200, selections: [
+        sel('lg-1', 'Man Utd', 2.20, 1700), sel('lg-2', 'Liverpool', 2.40, 1400), sel('lg-none', 'No Goal', 8.50, 700)] },
+      // === HALVES ===
+      { id: 'ht-result', name: 'Half Time Result', group: 'halves', status: 'settled', settled: 'ht-x', favorite: false, liability: 6100, volume: 15200, selections: [
+        sel('ht-1', 'Man Utd', 2.90, 2200), sel('ht-x', 'Draw', 2.30, 2400), sel('ht-2', 'Liverpool', 3.10, 1500)] },
+      { id: 'ht-ft', name: 'HT / FT', group: 'halves', status: 'suspended', settled: null, favorite: false, liability: 3200, volume: 7400, selections: [
+        susSel('htft-11', '1/1', 4.50, 600), susSel('htft-1x', '1/X', 18.00, 120), susSel('htft-12', '1/2', 15.00, 180),
+        susSel('htft-x1', 'X/1', 6.50, 420), susSel('htft-xx', 'X/X', 5.80, 480), susSel('htft-x2', 'X/2', 6.00, 400),
+        susSel('htft-21', '2/1', 16.00, 140), susSel('htft-2x', '2/X', 20.00, 100), susSel('htft-22', '2/2', 5.20, 760)] },
+      { id: 'ht-total-goals-0.5', name: 'HT Total Goals', specifier: '0.5', group: 'halves', status: 'settled', settled: 'httg05-o', favorite: false, liability: 7200, volume: 17800, selections: [
+        sel('httg05-o', 'Over 0.5', 1.42, 4200), sel('httg05-u', 'Under 0.5', 2.80, 3000)] },
+      { id: 'ht-total-goals-1.5', name: 'HT Total Goals', specifier: '1.5', group: 'halves', status: 'settled', settled: 'httg15-u', favorite: false, liability: 4600, volume: 11200, selections: [
+        sel('httg15-o', 'Over 1.5', 2.60, 2400), sel('httg15-u', 'Under 1.5', 1.50, 2200)] },
+      { id: 'ht-double-chance', name: 'HT Double Chance', group: 'halves', status: 'open', settled: null, favorite: false, liability: 3400, volume: 8200, selections: [
+        sel('htdc-1x', '1X', 1.30, 1400), sel('htdc-12', '12', 1.55, 1000), sel('htdc-x2', 'X2', 1.35, 1000)] },
+      { id: 'highest-scoring-half', name: 'Highest Scoring Half', group: 'halves', status: 'open', settled: null, favorite: false, liability: 2800, volume: 6800, selections: [
+        sel('hsh-1', '1st Half', 3.20, 900), sel('hsh-2', '2nd Half', 2.10, 1200), sel('hsh-eq', 'Equal', 3.50, 700)] },
+      { id: '2h-result', name: '2nd Half Result', group: 'halves', status: 'open', settled: null, favorite: false, liability: 4100, volume: 10200, selections: [
+        sel('2h-1', 'Man Utd', 2.70, 1500), sel('2h-x', 'Draw', 2.50, 1400), sel('2h-2', 'Liverpool', 2.90, 1200)] },
+      { id: '2h-total-goals-1.5', name: '2H Total Goals', specifier: '1.5', group: 'halves', status: 'open', settled: null, favorite: false, liability: 5200, volume: 12800, selections: [
+        sel('2htg15-o', 'Over 1.5', 2.20, 2800), sel('2htg15-u', 'Under 1.5', 1.65, 2400)] },
+      // === CORNERS ===
+      { id: 'total-corners', name: 'Total Corners', specifier: '9.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 3100, volume: 7600, selections: [
+        sel('tc-o', 'Over 9.5', 1.90, 1700), sel('tc-u', 'Under 9.5', 1.90, 1400)] },
+      { id: 'total-corners-ht', name: 'HT Total Corners', specifier: '4.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 2200, volume: 5400, selections: [
+        sel('tcht-o', 'Over 4.5', 2.05, 1200), sel('tcht-u', 'Under 4.5', 1.78, 1000)] },
+      { id: 'home-total-corners', name: 'Home Corners', specifier: '4.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 1800, volume: 4200, selections: [
+        sel('htc-o', 'Over 4.5', 1.85, 1000), sel('htc-u', 'Under 4.5', 1.95, 800)] },
+      { id: 'away-total-corners', name: 'Away Corners', specifier: '4.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 1600, volume: 3800, selections: [
+        sel('atc-o', 'Over 4.5', 2.10, 900), sel('atc-u', 'Under 4.5', 1.72, 700)] },
+      { id: 'corner-handicap', name: 'Corner Handicap', specifier: '-1.5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 2600, volume: 6200, selections: [
+        sel('ch-1', 'Man Utd -1.5', 2.30, 1400), sel('ch-2', 'Liverpool +1.5', 1.60, 1200)] },
+      { id: 'first-corner', name: 'First Corner', group: 'corners', status: 'open', settled: null, favorite: false, liability: 2400, volume: 5800, selections: [
+        sel('fc-1', 'Man Utd', 1.85, 1400), sel('fc-2', 'Liverpool', 1.95, 1000)] },
+      { id: 'last-corner', name: 'Last Corner', group: 'corners', status: 'open', settled: null, favorite: false, liability: 1500, volume: 3600, selections: [
+        sel('lc-1', 'Man Utd', 1.90, 800), sel('lc-2', 'Liverpool', 1.90, 700)] },
+      { id: 'corner-race', name: 'Corner Race To', specifier: '5', group: 'corners', status: 'open', settled: null, favorite: false, liability: 1900, volume: 4500, selections: [
+        sel('cr-1', 'Man Utd', 2.40, 700), sel('cr-2', 'Liverpool', 2.60, 600), sel('cr-none', 'Neither', 4.50, 600)] },
+      // === CARDS ===
+      { id: 'total-cards', name: 'Total Cards', specifier: '3.5', group: 'cards', status: 'open', settled: null, favorite: false, liability: 2100, volume: 5200, selections: [
+        sel('tcard-o', 'Over 3.5', 1.65, 1200), sel('tcard-u', 'Under 3.5', 2.25, 900)] },
+      { id: 'home-total-cards', name: 'Home Cards', specifier: '1.5', group: 'cards', status: 'open', settled: null, favorite: false, liability: 1400, volume: 3400, selections: [
+        sel('htcard-o', 'Over 1.5', 1.80, 800), sel('htcard-u', 'Under 1.5', 2.00, 600)] },
+      { id: 'away-total-cards', name: 'Away Cards', specifier: '1.5', group: 'cards', status: 'open', settled: null, favorite: false, liability: 1300, volume: 3100, selections: [
+        sel('atcard-o', 'Over 1.5', 1.75, 750), sel('atcard-u', 'Under 1.5', 2.05, 550)] },
+      { id: 'first-card', name: 'First Card', group: 'cards', status: 'open', settled: null, favorite: false, liability: 1800, volume: 4200, selections: [
+        sel('fcard-1', 'Man Utd', 2.00, 900), sel('fcard-2', 'Liverpool', 1.80, 900)] },
+      { id: 'player-card', name: 'Player To Be Carded', group: 'cards', status: 'open', settled: null, favorite: false, liability: 5600, volume: 14200, selections: [
+        sel('pc-cas', 'Casemiro', 2.50, 1200), sel('pc-mac', 'Mac Allister', 2.80, 1000), sel('pc-bru', 'Bruno', 3.20, 800),
+        sel('pc-szo', 'Szoboszlai', 3.50, 700), sel('pc-dal', 'Dalot', 3.00, 900), sel('pc-rob', 'Robertson', 3.30, 600),
+        sel('pc-eri', 'Eriksen', 4.00, 400)] },
+      // === HANDICAP ===
+      { id: 'asian-handicap', name: 'Asian Handicap', specifier: '-0.5', group: 'handicap', status: 'open', settled: null, favorite: true, liability: 15300, volume: 38900, selections: [
+        sel('ah-1', 'Man Utd -0.5', 2.60, 8200), sel('ah-2', 'Liverpool +0.5', 1.55, 7100)] },
+      { id: 'asian-handicap-1.5', name: 'Asian Handicap', specifier: '-1.5', group: 'handicap', status: 'open', settled: null, favorite: false, liability: 6800, volume: 16400, selections: [
+        sel('ah15-1', 'Man Utd -1.5', 4.20, 3200), sel('ah15-2', 'Liverpool +1.5', 1.22, 3600)] },
+      { id: 'european-handicap', name: 'European Handicap', specifier: '0:1', group: 'handicap', status: 'open', settled: null, favorite: false, liability: 4800, volume: 11200, selections: [
+        sel('eh-1', 'Man Utd', 4.20, 1600), sel('eh-x', 'Draw', 3.50, 1400), sel('eh-2', 'Liverpool', 1.80, 1800)] },
+      { id: 'european-handicap-2', name: 'European Handicap', specifier: '1:0', group: 'handicap', status: 'open', settled: null, favorite: false, liability: 3900, volume: 9400, selections: [
+        sel('eh2-1', 'Man Utd', 1.55, 1800), sel('eh2-x', 'Draw', 3.80, 1000), sel('eh2-2', 'Liverpool', 5.00, 1100)] },
+      // === SPECIALS ===
+      { id: 'penalty-awarded', name: 'Penalty Awarded', group: 'specials', status: 'open', settled: null, favorite: false, liability: 2200, volume: 5400, selections: [
+        sel('pen-y', 'Yes', 2.80, 1300), sel('pen-n', 'No', 1.42, 900)] },
+      { id: 'clean-sheet-home', name: 'Home Clean Sheet', group: 'specials', status: 'closed', settled: null, favorite: false, liability: 3100, volume: 7600, selections: [
+        sel('csh-y', 'Yes', 3.40, 1600), sel('csh-n', 'No', 1.30, 1500)] },
+      { id: 'clean-sheet-away', name: 'Away Clean Sheet', group: 'specials', status: 'closed', settled: null, favorite: false, liability: 2800, volume: 6800, selections: [
+        sel('csa-y', 'Yes', 3.80, 1400), sel('csa-n', 'No', 1.26, 1400)] },
+      { id: 'win-to-nil-home', name: 'Home Win To Nil', group: 'specials', status: 'open', settled: null, favorite: false, liability: 1800, volume: 4400, selections: [
+        sel('wtnh-y', 'Yes', 4.50, 900), sel('wtnh-n', 'No', 1.18, 900)] },
+      { id: 'win-to-nil-away', name: 'Away Win To Nil', group: 'specials', status: 'open', settled: null, favorite: false, liability: 1600, volume: 3800, selections: [
+        sel('wtna-y', 'Yes', 5.20, 800), sel('wtna-n', 'No', 1.14, 800)] },
+      { id: 'red-card', name: 'Red Card In Match', group: 'specials', status: 'open', settled: null, favorite: false, liability: 1200, volume: 2800, selections: [
+        sel('rc-y', 'Yes', 5.50, 600), sel('rc-n', 'No', 1.12, 600)] },
+      { id: 'var-decision', name: 'VAR Decision', group: 'specials', status: 'suspended', settled: null, favorite: false, liability: 900, volume: 2100, selections: [
+        susSel('var-y', 'Yes', 2.20, 500), susSel('var-n', 'No', 1.65, 400)] },
+      // === CORRECT SCORE ===
+      { id: 'correct-score', name: 'Correct Score', group: 'correct_score', status: 'open', settled: null, favorite: false, liability: 8400, volume: 20600, selections: [
+        sel('cs-10', '1-0', 6.50, 1200), sel('cs-20', '2-0', 10.00, 600), sel('cs-21', '2-1', 7.50, 900),
+        sel('cs-00', '0-0', 8.50, 500), sel('cs-11', '1-1', 5.80, 1400), sel('cs-22', '2-2', 12.00, 400),
+        sel('cs-01', '0-1', 7.00, 1000), sel('cs-02', '0-2', 11.00, 500), sel('cs-12', '1-2', 8.00, 800),
+        sel('cs-30', '3-0', 18.00, 200), sel('cs-31', '3-1', 14.00, 300), sel('cs-32', '3-2', 22.00, 150),
+        sel('cs-oth', 'Other', 15.00, 450)] },
+      { id: 'correct-score-ht', name: 'HT Correct Score', group: 'correct_score', status: 'settled', settled: 'csht-11', favorite: false, liability: 4200, volume: 10400, selections: [
+        sel('csht-00', '0-0', 3.20, 1200), sel('csht-10', '1-0', 5.50, 700), sel('csht-01', '0-1', 6.00, 600),
+        sel('csht-11', '1-1', 8.50, 400), sel('csht-20', '2-0', 14.00, 250), sel('csht-02', '0-2', 16.00, 200)] },
+      // === PLAYER ===
+      { id: 'anytime-scorer', name: 'Anytime Goalscorer', group: 'player', status: 'open', settled: null, favorite: true, liability: 18200, volume: 44800, selections: [
+        sel('as-ras', 'Rashford', 3.20, 3200), sel('as-hoj', 'Hojlund', 2.80, 3600), sel('as-bru', 'Bruno', 4.50, 2000),
+        sel('as-gar', 'Garnacho', 4.80, 1800), sel('as-sal', 'Salah', 2.50, 4000), sel('as-nun', 'Nunez', 3.00, 3000),
+        sel('as-jot', 'Jota', 3.50, 2400), sel('as-dia', 'Diaz', 4.00, 2200)] },
+      { id: 'first-scorer', name: 'First Goalscorer', group: 'player', status: 'open', settled: null, favorite: false, liability: 9400, volume: 23200, selections: [
+        sel('fs-ras', 'Rashford', 7.50, 1400), sel('fs-hoj', 'Hojlund', 6.50, 1600), sel('fs-bru', 'Bruno', 10.00, 800),
+        sel('fs-sal', 'Salah', 5.50, 2000), sel('fs-nun', 'Nunez', 6.00, 1500), sel('fs-jot', 'Jota', 8.00, 1100),
+        sel('fs-none', 'No Goalscorer', 8.50, 1000)] },
+      { id: 'last-scorer', name: 'Last Goalscorer', group: 'player', status: 'open', settled: null, favorite: false, liability: 5600, volume: 13800, selections: [
+        sel('ls-ras', 'Rashford', 7.00, 900), sel('ls-hoj', 'Hojlund', 6.00, 1000), sel('ls-sal', 'Salah', 5.00, 1200),
+        sel('ls-nun', 'Nunez', 5.50, 1100), sel('ls-none', 'No Goalscorer', 8.50, 1400)] },
+      { id: 'player-shots', name: 'Player Shots OT', specifier: '1.5+', group: 'player', status: 'open', settled: null, favorite: false, liability: 4200, volume: 10200, selections: [
+        sel('ps-sal', 'Salah 1.5+', 1.60, 1200), sel('ps-bru', 'Bruno 1.5+', 2.10, 800), sel('ps-ras', 'Rashford 1.5+', 2.00, 900),
+        sel('ps-nun', 'Nunez 1.5+', 1.80, 1000), sel('ps-hoj', 'Hojlund 1.5+', 2.30, 300)] },
+    ];
+
+    const initialParts = [
+      { id: '1h', name: '1st Half', status: 'ended', score: '1 - 1', time: "45+2'" },
+      { id: '2h', name: '2nd Half', status: 'live', score: '0 - 0', time: "62'" },
+      { id: 'ot', name: 'Overtime', status: 'pending', score: null, time: null },
+      { id: 'pen', name: 'Penalties', status: 'pending', score: null, time: null },
+    ];
+
+    // Utilities
+    function formatCurrency(val) {
+      if (val >= 1000) return `\u20AC${(val / 1000).toFixed(1)}k`;
+      return `\u20AC${val}`;
+    }
+    function formatOdds(val) { return val.toFixed(2); }
+    function formatTime(date) {
+      return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function generateInitialHistory(markets) {
+      const h = {};
+      const now = new Date();
+      markets.forEach(m => {
+        const entries = [{ time: new Date(now - 3600000), from: null, to: 'open', source: 'System', note: 'Market created' }];
+        if (m.status === 'suspended') entries.push({ time: new Date(now - 600000), from: 'open', to: 'suspended', source: 'Provider', note: 'Auto-suspended' });
+        if (m.status === 'settled') entries.push(
+          { time: new Date(now - 300000), from: 'open', to: 'suspended', source: 'System', note: 'Pre-settlement' },
+          { time: new Date(now - 240000), from: 'suspended', to: 'settled', source: 'Trader', note: 'Manual settlement' }
+        );
+        if (m.status === 'closed') entries.push({ time: new Date(now - 180000), from: 'open', to: 'closed', source: 'Trader', note: 'Market closed' });
+        h[m.id] = entries;
+      });
+      return h;
+    }
+
+    function generateInitialOddsHistory(markets) {
+      const h = {};
+      const now = new Date();
+      markets.forEach(m => {
+        m.selections.forEach(s => {
+          const entries = [];
+          for (let i = 4; i >= 0; i--) {
+            const drift = (Math.random() - 0.5) * 0.3;
+            entries.push({ time: new Date(now - i * 720000 - Math.random() * 300000), odds: i === 0 ? s.odds : Math.max(1.01, Math.round((s.odds + drift) * 100) / 100) });
+          }
+          h[s.id] = entries;
+        });
+      });
+      return h;
+    }
+
+    // ===== COMPONENTS =====
+
+    // Toast
+    function Toast({ message, type, onDone }) {
+      useEffect(() => { const t = setTimeout(onDone, 2500); return () => clearTimeout(t); }, [onDone]);
+      const icons = { success: '\u2713', warning: '\u26A0', error: '\u2717', info: '\u2139' };
+      return <div className={`toast toast--${type}`}>{icons[type] || ''} {message}</div>;
+    }
+
+    // Top Bar
+    function TopBar({ globalMode, onSetGlobalMode }) {
+      return (
+        <div className="top-bar">
+          <span className="top-bar__logo">MAKI</span>
+          <div className="top-bar__sep"></div>
+          <span className="top-bar__match-id">#1244</span>
+          <span className="top-bar__sport">{'\u26BD'} Football / Premier League</span>
+          <span className="top-bar__date">2024-11-03 18:00</span>
+          <div className="top-bar__actions">
+            <div className="global-mode-toggle">
+              <button className={`global-mode-btn ${globalMode === 'monitor' ? 'global-mode-btn--active' : ''}`}
+                onClick={() => onSetGlobalMode('monitor')}>{'\uD83D\uDC41'} Monitor</button>
+              <button className={`global-mode-btn ${globalMode === 'settle' ? 'global-mode-btn--active' : ''}`}
+                onClick={() => onSetGlobalMode('settle')}>{'\u2696'} Settle</button>
+            </div>
+            <div className="top-bar__sep"></div>
+            <div className="top-bar__kbd"><span className="kbd">G</span> Groups</div>
+            <div className="top-bar__kbd"><span className="kbd">S</span> Search</div>
+            <div className="top-bar__kbd"><span className="kbd">Esc</span> Close</div>
+          </div>
+        </div>
+      );
+    }
+
+    // Match Hero
+    function MatchHero({ markets, matchTime, onOpenAll, onSuspendAll }) {
+      const totalLiability = markets.reduce((s, m) => s + m.liability, 0);
+      const totalVolume = markets.reduce((s, m) => s + m.volume, 0);
+      const openCount = markets.filter(m => m.status === 'open').length;
+      const suspendedCount = markets.filter(m => m.status === 'suspended').length;
+      const settledCount = markets.filter(m => m.status === 'settled').length;
+      const voidCount = markets.filter(m => m.status === 'closed').length;
+      return (
+        <div className="match-hero">
+          <div className="match-hero__teams">
+            <div className="match-hero__team">
+              <div className="match-hero__team-name">Manchester United</div>
+              <div className="match-hero__team-stats">
+                <span>{'\uD83D\uDFE8'} 2</span>
+                <span>{'\uD83D\uDFE5'} 0</span>
+                <span>{'\u26F3'} 3</span>
+              </div>
+            </div>
+            <div className="match-hero__score-block">
+              <div className="match-hero__score">1 : 1</div>
+              <div className="match-hero__live-badge">
+                <span className="match-hero__live-dot"></span>
+                <span>LIVE {matchTime}'</span>
+              </div>
+            </div>
+            <div className="match-hero__team">
+              <div className="match-hero__team-name">Liverpool</div>
+              <div className="match-hero__team-stats">
+                <span>{'\uD83D\uDFE8'} 1</span>
+                <span>{'\uD83D\uDFE5'} 0</span>
+                <span>{'\u26F3'} 4</span>
+              </div>
+            </div>
+          </div>
+          <div className="match-hero__divider"></div>
+          <div className="match-hero__info">
+            <div className="match-hero__stat">
+              <span className="match-hero__stat-label">Open</span>
+              <span className="match-hero__stat-value" style={{color:'var(--green)'}}>{openCount}</span>
+            </div>
+            <div className="match-hero__stat">
+              <span className="match-hero__stat-label">Susp</span>
+              <span className="match-hero__stat-value" style={{color:'var(--orange)'}}>{suspendedCount}</span>
+            </div>
+            <div className="match-hero__stat">
+              <span className="match-hero__stat-label">Settled</span>
+              <span className="match-hero__stat-value" style={{color:'var(--settled)'}}>{settledCount}</span>
+            </div>
+            <div className="match-hero__stat">
+              <span className="match-hero__stat-label">Void</span>
+              <span className="match-hero__stat-value" style={{color:'var(--void)'}}>{voidCount}</span>
+            </div>
+            <div className="match-hero__divider"></div>
+            <div className="match-hero__stat">
+              <span className="match-hero__stat-label">Liability</span>
+              <span className="match-hero__stat-value" style={{color:'var(--orange)'}}>{formatCurrency(totalLiability)}</span>
+            </div>
+            <div className="match-hero__stat">
+              <span className="match-hero__stat-label">Volume</span>
+              <span className="match-hero__stat-value" style={{color:'var(--blue)'}}>{formatCurrency(totalVolume)}</span>
+            </div>
+          </div>
+          <div className="match-hero__global-actions">
+            <button className="btn btn--open btn--sm" onClick={onOpenAll}>Open All</button>
+            <button className="btn btn--suspend btn--sm" onClick={onSuspendAll}>Suspend All</button>
+          </div>
+        </div>
+      );
+    }
+
+    // Left Panel
+    function LeftPanel({ parts, markets, onPartAction }) {
+      const openCount = markets.filter(m => m.status === 'open').length;
+      const suspendedCount = markets.filter(m => m.status === 'suspended').length;
+      const settledCount = markets.filter(m => m.status === 'settled').length;
+      const closedCount = markets.filter(m => m.status === 'closed').length;
+      return (
+        <div className="left-panel">
+          <div className="panel-section">
+            <div className="panel-section__title">Match Flow</div>
+            <div className="timeline">
+              {parts.map((part, i) => (
+                <React.Fragment key={part.id}>
+                  <div className={`timeline-item ${part.status === 'live' ? 'timeline-item--active' : ''}`}>
+                    <div className={`timeline-item__indicator timeline-item__indicator--${part.status === 'live' ? 'active' : part.status === 'ended' ? 'completed' : 'pending'}`}>
+                      {part.status === 'ended' ? '\u2713' : part.status === 'live' ? '\u25B6' : '\u00B7'}
+                    </div>
+                    <div className="timeline-item__content">
+                      <div className="timeline-item__name">{part.name}</div>
+                      <div className={`timeline-item__status ${part.status === 'live' ? 'timeline-item__status--live' : ''}`}>
+                        {part.status === 'live' ? `In Progress ${part.time || ''}` : part.status === 'ended' ? `Ended ${part.time || ''}` : 'Not Started'}
+                      </div>
+                    </div>
+                    {part.score && <span className="timeline-item__score">{part.score}</span>}
+                  </div>
+                  {i < parts.length - 1 && <div className="timeline-connector"></div>}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+          <div className="panel-section">
+            <div className="panel-section__title">Match Actions</div>
+            <div className="flow-actions">
+              <button className="flow-btn flow-btn--primary" onClick={() => onPartAction('end-period')}>
+                <span className="flow-btn__icon">{'\u25A0'}</span> End 2nd Half
+              </button>
+              <button className="flow-btn flow-btn--secondary" onClick={() => onPartAction('start-ot')}>
+                <span className="flow-btn__icon">{'\u25B6'}</span> Start Overtime
+              </button>
+              <button className="flow-btn flow-btn--danger" onClick={() => onPartAction('close-match')}>
+                <span className="flow-btn__icon">{'\u2717'}</span> Close Match
+              </button>
+              <button className="flow-btn flow-btn--secondary" onClick={() => onPartAction('cancel-match')}>
+                <span className="flow-btn__icon">{'\u26A0'}</span> Cancel Match
+              </button>
+            </div>
+          </div>
+          <div className="panel-section">
+            <div className="panel-section__title">Quick Stats</div>
+            <div className="quick-stats">
+              <div className="quick-stat">
+                <div className="quick-stat__label">Open</div>
+                <div className="quick-stat__value" style={{color:'var(--green)'}}>{openCount}</div>
+              </div>
+              <div className="quick-stat">
+                <div className="quick-stat__label">Suspended</div>
+                <div className="quick-stat__value" style={{color:'var(--orange)'}}>{suspendedCount}</div>
+              </div>
+              <div className="quick-stat">
+                <div className="quick-stat__label">Settled</div>
+                <div className="quick-stat__value" style={{color:'var(--settled)'}}>{settledCount}</div>
+              </div>
+              <div className="quick-stat">
+                <div className="quick-stat__label">Closed</div>
+                <div className="quick-stat__value" style={{color:'var(--red)'}}>{closedCount}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Monitor Mode Selection
+    function MonitorSelection({ s, marketSettled, onToggle }) {
+      const [flashClass, setFlashClass] = useState('');
+      const prevRef = useRef(s.odds);
+      useEffect(() => {
+        if (s.odds !== prevRef.current) {
+          setFlashClass(s.odds > prevRef.current ? 'flash-green' : 'flash-red');
+          prevRef.current = s.odds;
+          const t = setTimeout(() => setFlashClass(''), 600);
+          return () => clearTimeout(t);
+        }
+      }, [s.odds]);
+      const isSuspended = s.status === 'suspended';
+      const isWinner = marketSettled === s.id;
+      return (
+        <div className={`sel ${isSuspended ? 'sel--suspended' : ''} ${isWinner ? 'sel--winner' : ''} ${flashClass}`}
+          onClick={() => onToggle(s.id)} title={isSuspended ? 'Click to activate' : 'Click to suspend'}>
+          {isSuspended && <span className="sel__suspended-tag">SUSP</span>}
+          <span className="sel__name">{s.name}</span>
+          {isWinner && <span className="sel__winner-tag">WIN</span>}
+          <span className="sel__right">
+            <span className="sel__liability">{formatCurrency(s.liability)}</span>
+            {s.direction === 'up' && <span className="sel__arrow sel__arrow--up">{'\u25B2'}</span>}
+            {s.direction === 'down' && <span className="sel__arrow sel__arrow--down">{'\u25BC'}</span>}
+            {!s.direction && <span className="sel__arrow"></span>}
+            <span className="sel__odds">{formatOdds(s.odds)}</span>
+          </span>
+        </div>
+      );
+    }
+
+    // Settle Mode Selection
+    function SettleSelection({ s, selected, isWinner, onSelect }) {
+      return (
+        <div className={`settle-sel ${selected ? 'settle-sel--selected' : ''} ${isWinner ? 'settle-sel--winner' : ''}`}
+          onClick={onSelect}>
+          <div className="settle-sel__radio">
+            {(selected || isWinner) && <div className="settle-sel__radio-dot"></div>}
+          </div>
+          <span className="settle-sel__name">{s.name}</span>
+        </div>
+      );
+    }
+
+    // Market Card
+    function MarketCard({ market, mode, onSetMode, onToggleFavorite, onSetStatus, onToggleSelection,
+      onShowHistory, onShowOddsHistory, onStartSettle, onStopSettle, onStartCancel, onStopCancel,
+      onRollback, settlingInfo, cancellingInfo }) {
+      const [collapsed, setCollapsed] = useState(false);
+      const [settleSelection, setSettleSelection] = useState(null);
+      const n = market.selections.length;
+      const gridClass = n === 2 ? 'sel-grid--2' : n === 3 ? 'sel-grid--3' : n > 6 ? 'sel-grid--many' : 'sel-grid--3';
+
+      const isSettling = !!settlingInfo;
+      const isCancelling = !!cancellingInfo;
+      const statusClass = isSettling ? 'market-card--settling' : isCancelling ? 'market-card--cancelling' : `market-card--${market.status}`;
+
+      const handleSettleClick = (selId) => {
+        if (market.status === 'settled' || market.status === 'closed') return;
+        if (isSettling) return;
+        setSettleSelection(selId);
+      };
+
+      const confirmSettle = () => {
+        if (settleSelection) {
+          onStartSettle(market.id, settleSelection);
+        }
+      };
+
+      return (
+        <div className={`market-card ${statusClass}`}>
+          <div className="market-card__header" onClick={() => setCollapsed(!collapsed)}>
+            <button className={`market-card__star ${market.favorite ? 'market-card__star--active' : ''}`}
+              onClick={e => { e.stopPropagation(); onToggleFavorite(market.id); }}>
+              {market.favorite ? '\u2605' : '\u2606'}
+            </button>
+            <span className="market-card__name">
+              {market.name}
+              {market.specifier && <span className="market-card__specifier">{market.specifier}</span>}
+            </span>
+            <span className={`market-card__badge market-card__badge--${market.status}`}>
+              {isSettling ? 'settling...' : isCancelling ? 'cancelling...' : market.status}
+            </span>
+            <div className="market-card__mode-toggle" onClick={e => e.stopPropagation()}>
+              <button className={`market-card__mode-btn ${mode === 'monitor' ? 'market-card__mode-btn--active' : ''}`}
+                onClick={() => onSetMode(market.id, 'monitor')} title="Monitor">{'\uD83D\uDC41'}</button>
+              <button className={`market-card__mode-btn ${mode === 'settle' ? 'market-card__mode-btn--active' : ''}`}
+                onClick={() => onSetMode(market.id, 'settle')} title="Settle">{'\u2696'}</button>
+            </div>
+            <span className={`market-card__chevron ${collapsed ? 'market-card__chevron--collapsed' : ''}`}>{'\u25BE'}</span>
+          </div>
+          <div className={`market-card__body ${collapsed ? 'market-card__body--hidden' : ''}`}>
+            {mode === 'monitor' ? (
+              <div className={`sel-grid ${gridClass}`}>
+                {market.selections.map(s => (
+                  <MonitorSelection key={s.id} s={s} marketSettled={market.settled}
+                    onToggle={id => onToggleSelection(market.id, id)} />
+                ))}
+              </div>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                {market.selections.map(s => (
+                  <SettleSelection key={s.id} s={s}
+                    selected={settleSelection === s.id}
+                    isWinner={market.settled === s.id}
+                    onSelect={() => handleSettleClick(s.id)} />
+                ))}
+                {settleSelection && !isSettling && market.status !== 'settled' && (
+                  <button className="btn btn--sm" style={{background:'var(--settled)',color:'#000',borderColor:'var(--settled)',marginTop:4,alignSelf:'flex-end'}}
+                    onClick={confirmSettle}>Confirm Settle</button>
+                )}
+              </div>
+            )}
+
+            {isSettling && (
+              <div className="countdown-bar" key={settlingInfo.startTime}></div>
+            )}
+            {isCancelling && (
+              <div className="countdown-bar countdown-bar--red" key={cancellingInfo.startTime}></div>
+            )}
+
+            <div className="mkt-controls">
+              {isSettling && (
+                <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopSettle(market.id)}>Stop</button>
+              )}
+              {isCancelling && (
+                <button className="mkt-ctrl mkt-ctrl--stop" onClick={() => onStopCancel(market.id)}>Stop</button>
+              )}
+              {!isSettling && !isCancelling && (
+                <>
+                  {market.status !== 'open' && market.status !== 'settled' && (
+                    <button className="mkt-ctrl mkt-ctrl--open" onClick={() => onSetStatus(market.id, 'open')}>Open</button>
+                  )}
+                  {market.status === 'open' && (
+                    <button className="mkt-ctrl mkt-ctrl--suspend" onClick={() => onSetStatus(market.id, 'suspended')}>Susp</button>
+                  )}
+                  {market.status !== 'closed' && market.status !== 'settled' && (
+                    <button className="mkt-ctrl mkt-ctrl--close" onClick={() => onSetStatus(market.id, 'closed')}>Close</button>
+                  )}
+                  {(market.status === 'settled' || market.status === 'closed') && (
+                    <button className="mkt-ctrl mkt-ctrl--rollback" onClick={() => onRollback(market.id)}>Rollback</button>
+                  )}
+                  {market.status !== 'settled' && (
+                    <button className="mkt-ctrl mkt-ctrl--close" onClick={() => onStartCancel(market.id)}>Cancel</button>
+                  )}
+                  <button className="mkt-ctrl mkt-ctrl--history" onClick={() => onShowHistory(market.id)}>Hist</button>
+                  <button className="mkt-ctrl" style={{color:'var(--purple)',borderColor:'var(--purple-border)'}}
+                    onClick={() => onShowOddsHistory(market.id)}>Odds</button>
+                </>
+              )}
+              <div className="mkt-controls__spacer"></div>
+              <div className="mkt-controls__stats">
+                <span>L: <span>{formatCurrency(market.liability)}</span></span>
+                <span>V: <span>{formatCurrency(market.volume)}</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Status History Modal
+    function StatusHistoryModal({ market, history, onClose }) {
+      return (
+        <div className="overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <div className="modal__title">History: {market.name}{market.specifier ? ` (${market.specifier})` : ''}</div>
+              <button className="modal__close" onClick={onClose}>{'\u00D7'}</button>
+            </div>
+            <table className="htable">
+              <thead><tr><th>Time</th><th>From</th><th></th><th>To</th><th>Source</th><th>Note</th></tr></thead>
+              <tbody>
+                {[...(history || [])].reverse().map((e, i) => (
+                  <tr key={i}>
+                    <td className="htable__time">{formatTime(e.time)}</td>
+                    <td>{e.from ? <span className={`htable__badge htable__badge--${e.from}`}>{e.from}</span> : '\u2014'}</td>
+                    <td style={{color:'var(--text-muted)',textAlign:'center'}}>{'\u2192'}</td>
+                    <td><span className={`htable__badge htable__badge--${e.to}`}>{e.to}</span></td>
+                    <td>{e.source}</td>
+                    <td style={{color:'var(--text-muted)',fontSize:10}}>{e.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {(!history || history.length === 0) && <div style={{textAlign:'center',padding:20,color:'var(--text-muted)'}}>No history</div>}
+          </div>
+        </div>
+      );
+    }
+
+    // Odds History Modal
+    function OddsHistoryModal({ market, oddsHistory, onClose }) {
+      const [selId, setSelId] = useState(market.selections[0]?.id);
+      const entries = oddsHistory[selId] || [];
+      return (
+        <div className="overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <div className="modal__title">Odds: {market.name}{market.specifier ? ` (${market.specifier})` : ''}</div>
+              <button className="modal__close" onClick={onClose}>{'\u00D7'}</button>
+            </div>
+            <div className="odds-tabs">
+              {market.selections.map(s => (
+                <button key={s.id} className={`odds-tab ${selId === s.id ? 'odds-tab--active' : ''}`}
+                  onClick={() => setSelId(s.id)}>{s.name}</button>
+              ))}
+            </div>
+            <table className="htable">
+              <thead><tr><th>Time</th><th>Odds</th><th>Change</th></tr></thead>
+              <tbody>
+                {[...entries].reverse().map((e, i, arr) => {
+                  const prev = arr[i + 1];
+                  const diff = prev ? e.odds - prev.odds : 0;
+                  return (
+                    <tr key={i}>
+                      <td className="htable__time">{formatTime(e.time)}</td>
+                      <td style={{fontFamily:'var(--font-mono)',fontWeight:700}}>{formatOdds(e.odds)}</td>
+                      <td style={{fontFamily:'var(--font-mono)',fontWeight:600,color: diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--red)' : 'var(--text-muted)'}}>
+                        {prev ? `${diff > 0 ? '\u25B2' : diff < 0 ? '\u25BC' : '\u2014'} ${diff !== 0 ? Math.abs(diff).toFixed(2) : ''}` : 'Initial'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // Cancel Reason Modal
+    function CancelModal({ market, onConfirm, onClose }) {
+      const [reason, setReason] = useState('');
+      return (
+        <div className="overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <div className="modal__title">Cancel: {market.name}</div>
+              <button className="modal__close" onClick={onClose}>{'\u00D7'}</button>
+            </div>
+            <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:8}}>Provide a reason for cancellation:</div>
+            <textarea className="cancel-textarea" placeholder="Reason..." value={reason}
+              onChange={e => setReason(e.target.value)} autoFocus />
+            <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
+              <button className="btn btn--ghost btn--sm" onClick={onClose}>Back</button>
+              <button className="btn btn--danger btn--sm" style={{opacity: reason.trim() ? 1 : 0.4}}
+                onClick={() => reason.trim() && onConfirm(market.id, reason)} disabled={!reason.trim()}>
+                Start Cancel (10s)
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Group Modal
+    function GroupModal({ markets, onGroupAction, onClose }) {
+      return (
+        <div className="overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <div className="modal__title">Market Groups</div>
+              <button className="modal__close" onClick={onClose}>{'\u00D7'}</button>
+            </div>
+            <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:10}}>Suspend or open all markets within a group</div>
+            {GROUP_KEYS.map(key => {
+              const groupMarkets = markets.filter(m => m.group === key);
+              const openCount = groupMarkets.filter(m => m.status === 'open').length;
+              return (
+                <div className="group-item" key={key}>
+                  <span>
+                    <span className="group-item__name">{MARKET_GROUPS[key]?.name || key}</span>
+                    <span className="group-item__count">{openCount}/{groupMarkets.length} open</span>
+                  </span>
+                  <div className="group-item__actions">
+                    <button className="btn btn--xs" style={{background:'var(--green-bg)',color:'var(--green)',border:'1px solid var(--green-border)'}}
+                      onClick={() => onGroupAction(key, 'open')}>Open</button>
+                    <button className="btn btn--xs" style={{background:'var(--orange-bg)',color:'var(--orange)',border:'1px solid var(--orange-border)'}}
+                      onClick={() => onGroupAction(key, 'suspended')}>Suspend</button>
+                  </div>
+                </div>
+              );
+            })}
+            <div style={{textAlign:'center',marginTop:10,fontSize:10,color:'var(--text-muted)'}}>
+              Press <span className="kbd">ESC</span> or <span className="kbd">G</span> to close
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ===== MAIN APP =====
+    function App() {
+      const [markets, setMarkets] = useState(initialMarkets);
+      const [parts, setParts] = useState(initialParts);
+      const [activeTab, setActiveTab] = useState('all');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [toast, setToast] = useState(null);
+      const [matchTime, setMatchTime] = useState(62);
+      const [statusHistory, setStatusHistory] = useState(() => generateInitialHistory(initialMarkets));
+      const [oddsHistory, setOddsHistory] = useState(() => generateInitialOddsHistory(initialMarkets));
+      const [modal, setModal] = useState(null);
+      const [showGroupPopup, setShowGroupPopup] = useState(false);
+      const [globalMode, setGlobalMode] = useState('monitor');
+      const [marketModes, setMarketModes] = useState({});
+      const [settlingMap, setSettlingMap] = useState({});
+      const [cancellingMap, setCancellingMap] = useState({});
+      const settleTimers = useRef({});
+      const cancelTimers = useRef({});
+      const searchRef = useRef(null);
+
+      // Get mode for a market (per-market override or global)
+      const getMode = useCallback((marketId) => {
+        return marketModes[marketId] || globalMode;
+      }, [marketModes, globalMode]);
+
+      const setMarketMode = useCallback((marketId, mode) => {
+        setMarketModes(prev => ({ ...prev, [marketId]: mode }));
+      }, []);
+
+      const handleSetGlobalMode = useCallback((mode) => {
+        setGlobalMode(mode);
+        setMarketModes({});
+      }, []);
+
+      // Live odds simulation
+      useEffect(() => {
+        const interval = setInterval(() => {
+          const updates = [];
+          setMarkets(prev => {
+            const next = prev.map(m => ({ ...m, selections: m.selections.map(s => ({ ...s })) }));
+            const count = Math.floor(Math.random() * 3) + 1;
+            for (let i = 0; i < count; i++) {
+              const open = next.filter(m => m.status === 'open');
+              if (!open.length) break;
+              const m = open[Math.floor(Math.random() * open.length)];
+              const active = m.selections.filter(s => s.status === 'active');
+              if (!active.length) continue;
+              const s = active[Math.floor(Math.random() * active.length)];
+              const change = (Math.random() - 0.48) * 0.12;
+              const newOdds = Math.max(1.01, Math.round((s.odds + change) * 100) / 100);
+              if (newOdds !== s.odds) {
+                s.prevOdds = s.odds;
+                s.direction = newOdds > s.odds ? 'up' : 'down';
+                s.odds = newOdds;
+                updates.push({ selId: s.id, odds: newOdds });
+              }
+              s.liability = Math.max(0, s.liability + Math.floor((Math.random() - 0.3) * 200));
+              m.liability = m.selections.reduce((sum, s) => sum + s.liability, 0);
+              m.volume += Math.floor(Math.random() * 300);
+            }
+            return next;
+          });
+          if (updates.length) {
+            setOddsHistory(prev => {
+              const next = { ...prev };
+              const now = new Date();
+              updates.forEach(({ selId, odds }) => { next[selId] = [...(next[selId] || []), { time: now, odds }]; });
+              return next;
+            });
+          }
+        }, 2000 + Math.random() * 2000);
+        return () => clearInterval(interval);
+      }, []);
+
+      // Clear direction arrows
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setMarkets(prev => prev.map(m => ({ ...m, selections: m.selections.map(s => ({ ...s, direction: null })) })));
+        }, 4000);
+        return () => clearInterval(interval);
+      }, []);
+
+      // Match time
+      useEffect(() => {
+        const interval = setInterval(() => setMatchTime(t => t < 90 ? t + 1 : t), 30000);
+        return () => clearInterval(interval);
+      }, []);
+
+      // Keyboard
+      useEffect(() => {
+        const handler = e => {
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+          if (e.key === 'g' || e.key === 'G') { e.preventDefault(); setShowGroupPopup(p => !p); }
+          if (e.key === 's' || e.key === 'S') {
+            e.preventDefault();
+            if (searchRef.current) searchRef.current.focus();
+          }
+          if (e.key === 'Escape') { setShowGroupPopup(false); setModal(null); }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+      }, []);
+
+      // Cleanup timers on unmount
+      useEffect(() => {
+        return () => {
+          Object.values(settleTimers.current).forEach(clearTimeout);
+          Object.values(cancelTimers.current).forEach(clearTimeout);
+        };
+      }, []);
+
+      const toggleFavorite = useCallback(id => {
+        setMarkets(prev => prev.map(m => m.id === id ? { ...m, favorite: !m.favorite } : m));
+      }, []);
+
+      const setMarketStatus = useCallback((id, status) => {
+        setMarkets(prev => {
+          const m = prev.find(x => x.id === id);
+          if (m) {
+            setStatusHistory(h => ({ ...h, [id]: [...(h[id] || []), { time: new Date(), from: m.status, to: status, source: 'Trader', note: 'Manual' }] }));
+          }
+          return prev.map(m => {
+            if (m.id !== id) return m;
+            const selStatus = status === 'open' ? 'active' : 'suspended';
+            return { ...m, status, settled: status === 'open' ? null : m.settled, selections: m.selections.map(s => ({ ...s, status: selStatus })) };
+          });
+        });
+        setToast({ message: `Market ${status}`, type: status === 'open' ? 'success' : 'warning' });
+      }, []);
+
+      const toggleSelection = useCallback((mId, sId) => {
+        setMarkets(prev => prev.map(m => {
+          if (m.id !== mId) return m;
+          return { ...m, selections: m.selections.map(s => s.id === sId ? { ...s, status: s.status === 'active' ? 'suspended' : 'active' } : s) };
+        }));
+      }, []);
+
+      // Settlement with 10-second countdown
+      const startSettle = useCallback((mId, winnerId) => {
+        setSettlingMap(prev => ({ ...prev, [mId]: { winnerId, startTime: Date.now() } }));
+        settleTimers.current[mId] = setTimeout(() => {
+          // Actually settle
+          setMarkets(prev => {
+            setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: prev.find(m => m.id === mId)?.status, to: 'settled', source: 'Trader', note: `Settled: winner=${winnerId}` }] }));
+            return prev.map(m => m.id === mId ? { ...m, status: 'settled', settled: winnerId, selections: m.selections.map(s => ({ ...s, status: 'suspended' })) } : m);
+          });
+          setSettlingMap(prev => { const n = { ...prev }; delete n[mId]; return n; });
+          delete settleTimers.current[mId];
+          setToast({ message: 'Market settled', type: 'success' });
+        }, 10000);
+      }, []);
+
+      const stopSettle = useCallback((mId) => {
+        if (settleTimers.current[mId]) {
+          clearTimeout(settleTimers.current[mId]);
+          delete settleTimers.current[mId];
+        }
+        setSettlingMap(prev => { const n = { ...prev }; delete n[mId]; return n; });
+        setToast({ message: 'Settlement stopped', type: 'info' });
+      }, []);
+
+      // Cancel with reason modal + 10-second countdown
+      const startCancelFlow = useCallback((mId) => {
+        const market = markets.find(m => m.id === mId);
+        if (market) setModal({ type: 'cancel', marketId: mId });
+      }, [markets]);
+
+      const confirmCancel = useCallback((mId, reason) => {
+        setModal(null);
+        setCancellingMap(prev => ({ ...prev, [mId]: { reason, startTime: Date.now() } }));
+        cancelTimers.current[mId] = setTimeout(() => {
+          setMarkets(prev => {
+            setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: prev.find(m => m.id === mId)?.status, to: 'closed', source: 'Trader', note: `Cancelled: ${reason}` }] }));
+            return prev.map(m => m.id === mId ? { ...m, status: 'closed', selections: m.selections.map(s => ({ ...s, status: 'suspended' })) } : m);
+          });
+          setCancellingMap(prev => { const n = { ...prev }; delete n[mId]; return n; });
+          delete cancelTimers.current[mId];
+          setToast({ message: 'Market cancelled', type: 'error' });
+        }, 10000);
+      }, []);
+
+      const stopCancel = useCallback((mId) => {
+        if (cancelTimers.current[mId]) {
+          clearTimeout(cancelTimers.current[mId]);
+          delete cancelTimers.current[mId];
+        }
+        setCancellingMap(prev => { const n = { ...prev }; delete n[mId]; return n; });
+        setToast({ message: 'Cancellation stopped', type: 'info' });
+      }, []);
+
+      // Rollback
+      const rollback = useCallback(mId => {
+        setMarkets(prev => {
+          setStatusHistory(h => ({ ...h, [mId]: [...(h[mId] || []), { time: new Date(), from: prev.find(m => m.id === mId)?.status, to: 'open', source: 'Trader', note: 'Rolled back' }] }));
+          return prev.map(m => m.id === mId ? { ...m, status: 'open', settled: null, selections: m.selections.map(s => ({ ...s, status: 'active' })) } : m);
+        });
+        setToast({ message: 'Rolled back to open', type: 'info' });
+      }, []);
+
+      const handleGroupAction = useCallback((groupKey, status) => {
+        setMarkets(prev => {
+          const now = new Date();
+          setStatusHistory(h => {
+            const next = { ...h };
+            prev.filter(m => m.group === groupKey && m.status !== 'settled').forEach(m => {
+              next[m.id] = [...(next[m.id] || []), { time: now, from: m.status, to: status, source: 'Trader', note: 'Group action' }];
+            });
+            return next;
+          });
+          return prev.map(m => {
+            if (m.group !== groupKey || m.status === 'settled') return m;
+            return { ...m, status, selections: m.selections.map(s => ({ ...s, status: status === 'open' ? 'active' : 'suspended' })) };
+          });
+        });
+        setToast({ message: `Group ${status}`, type: status === 'open' ? 'success' : 'warning' });
+        setShowGroupPopup(false);
+      }, []);
+
+      const openAll = useCallback(() => {
+        setMarkets(prev => prev.map(m => m.status === 'settled' ? m : { ...m, status: 'open', selections: m.selections.map(s => ({ ...s, status: 'active' })) }));
+        setToast({ message: 'All markets opened', type: 'success' });
+      }, []);
+
+      const suspendAll = useCallback(() => {
+        setMarkets(prev => prev.map(m => m.status === 'settled' ? m : { ...m, status: 'suspended', selections: m.selections.map(s => ({ ...s, status: 'suspended' })) }));
+        setToast({ message: 'All markets suspended', type: 'warning' });
+      }, []);
+
+      const handlePartAction = useCallback(action => {
+        setToast({ message: `Action: ${action}`, type: 'info' });
+      }, []);
+
+      // Filter markets
+      const filteredMarkets = useMemo(() => {
+        let list = markets;
+        if (activeTab !== 'all') list = list.filter(m => m.group === activeTab);
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          list = list.filter(m => m.name.toLowerCase().includes(q) || (m.specifier && m.specifier.includes(q)));
+        }
+        return list;
+      }, [markets, activeTab, searchQuery]);
+
+      // 3-column layout: favorites to col 1, then shortest-column-first
+      const columns = useMemo(() => {
+        const cols = [[], [], []];
+        const heights = [0, 0, 0];
+
+        const estimateHeight = (m) => {
+          const n = m.selections.length;
+          const base = 38; // header
+          const mode = getMode(m.id);
+          if (mode === 'settle') return base + n * 32 + 30;
+          const rows = n <= 3 ? 1 : Math.ceil(n / 3);
+          return base + rows * 36 + 30;
+        };
+
+        // Favorites first -> column 0
+        const favs = filteredMarkets.filter(m => m.favorite);
+        const rest = filteredMarkets.filter(m => !m.favorite);
+
+        favs.forEach(m => {
+          cols[0].push(m);
+          heights[0] += estimateHeight(m);
+        });
+
+        rest.forEach(m => {
+          const shortest = heights[0] <= heights[1] && heights[0] <= heights[2] ? 0
+            : heights[1] <= heights[2] ? 1 : 2;
+          cols[shortest].push(m);
+          heights[shortest] += estimateHeight(m);
+        });
+
+        return cols;
+      }, [filteredMarkets, getMode]);
+
+      // Tab counts
+      const tabCounts = useMemo(() => {
+        const c = { all: markets.length };
+        markets.forEach(m => { c[m.group] = (c[m.group] || 0) + 1; });
+        return c;
+      }, [markets]);
+
+      const openCount = markets.filter(m => m.status === 'open').length;
+      const suspendedCount = markets.filter(m => m.status === 'suspended').length;
+      const settledCount = markets.filter(m => m.status === 'settled').length;
+      const closedCount = markets.filter(m => m.status === 'closed').length;
+
+      return (
+        <>
+          <TopBar globalMode={globalMode} onSetGlobalMode={handleSetGlobalMode} />
+          <MatchHero markets={markets} matchTime={matchTime} onOpenAll={openAll} onSuspendAll={suspendAll} />
+          <div className="main-layout">
+            <LeftPanel parts={parts} markets={markets} onPartAction={handlePartAction} />
+            <div className="center-panel">
+              <div className="market-tabs">
+                {Object.entries(MARKET_GROUPS).map(([key, g]) => (
+                  <button key={key} className={`market-tab ${activeTab === key ? 'market-tab--active' : ''}`}
+                    onClick={() => setActiveTab(key)}>
+                    {g.name}
+                    <span className="market-tab__count">{tabCounts[key] || 0}</span>
+                  </button>
+                ))}
+                <div className="market-tabs__spacer"></div>
+                <div className="market-search">
+                  <span className="market-search__icon">{'\uD83D\uDD0D'}</span>
+                  <input ref={searchRef} className="market-search__input" placeholder="Search..."
+                    value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                </div>
+                <div className="market-tabs__summary">
+                  <span><span className="market-tabs__summary-dot" style={{background:'var(--green)'}}></span>{openCount}</span>
+                  <span><span className="market-tabs__summary-dot" style={{background:'var(--orange)'}}></span>{suspendedCount}</span>
+                  <span><span className="market-tabs__summary-dot" style={{background:'var(--settled)'}}></span>{settledCount}</span>
+                  <span><span className="market-tabs__summary-dot" style={{background:'var(--red)'}}></span>{closedCount}</span>
+                </div>
+              </div>
+              <div className="market-grid-container">
+                {filteredMarkets.length === 0 ? (
+                  <div style={{textAlign:'center',padding:40,color:'var(--text-muted)'}}>No markets found</div>
+                ) : (
+                  <div className="market-grid">
+                    {columns.map((col, ci) => (
+                      <div className="market-column" key={ci}>
+                        {col.map(m => (
+                          <MarketCard
+                            key={m.id}
+                            market={m}
+                            mode={getMode(m.id)}
+                            onSetMode={setMarketMode}
+                            onToggleFavorite={toggleFavorite}
+                            onSetStatus={setMarketStatus}
+                            onToggleSelection={toggleSelection}
+                            onShowHistory={id => setModal({ type: 'history', marketId: id })}
+                            onShowOddsHistory={id => setModal({ type: 'odds', marketId: id })}
+                            onStartSettle={startSettle}
+                            onStopSettle={stopSettle}
+                            onStartCancel={startCancelFlow}
+                            onStopCancel={stopCancel}
+                            onRollback={rollback}
+                            settlingInfo={settlingMap[m.id] || null}
+                            cancellingInfo={cancellingMap[m.id] || null}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {showGroupPopup && <GroupModal markets={markets} onGroupAction={handleGroupAction} onClose={() => setShowGroupPopup(false)} />}
+
+          {modal?.type === 'history' && (
+            <StatusHistoryModal market={markets.find(m => m.id === modal.marketId)} history={statusHistory[modal.marketId]} onClose={() => setModal(null)} />
+          )}
+          {modal?.type === 'odds' && (
+            <OddsHistoryModal market={markets.find(m => m.id === modal.marketId)} oddsHistory={oddsHistory} onClose={() => setModal(null)} />
+          )}
+          {modal?.type === 'cancel' && (
+            <CancelModal market={markets.find(m => m.id === modal.marketId)} onConfirm={confirmCancel} onClose={() => setModal(null)} />
+          )}
+
+          {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
